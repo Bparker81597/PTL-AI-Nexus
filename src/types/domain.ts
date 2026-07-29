@@ -24,9 +24,14 @@ export interface Asset {
   type: AssetType;
   url: string;
   projectId?: string;
+  sceneId?: string;
   characterId?: string;
+  characterIds?: string[];
   providerId?: string;
   createdAt: string;
+  dimensions?: string;
+  duration?: number;
+  isMock: boolean;
   metadata?: Record<string, unknown>;
 }
 
@@ -65,10 +70,33 @@ export interface Project {
 export interface Scene {
   id: string;
   projectId: string;
-  name: string;
+  title: string;
   description: string;
-  assetIds: string[];
+  order: number;
   characterIds: string[];
+  sourceImageAssetId?: string;
+  outputVideoAssetId?: string;
+  location: string;
+  action: string;
+  emotion: string;
+  dialogue: string;
+  motionPrompt: string;
+  cameraMovement: string;
+  duration: 3 | 5 | 8 | 10;
+  aspectRatio: string;
+  resolution: string;
+  fps: number;
+  motionStrength: number;
+  status: "draft" | "image-ready" | "rendering" | "completed";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Storyboard {
+  id: string;
+  projectId: string;
+  title: string;
+  sceneIds: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -83,9 +111,13 @@ export interface RenderJob {
   status: RenderStatus;
   progress: number;
   createdAt: string;
+  updatedAt?: string;
   estimatedCompletion?: string;
   outputAssetIds: string[];
   request: GenerationRequest;
+  sourceAssetIds?: string[];
+  sceneId?: string;
+  cancelledAt?: string;
   errorMessage?: string;
 }
 
@@ -128,4 +160,11 @@ export interface CreateProjectInput {
   name: string;
   description?: string;
   type: Project["type"];
+}
+
+export interface CreateSceneInput {
+  projectId: string;
+  title: string;
+  description: string;
+  characterIds: string[];
 }

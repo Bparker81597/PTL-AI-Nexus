@@ -3,6 +3,7 @@ import type {
   Character,
   CreateCharacterInput,
   CreateProjectInput,
+  CreateSceneInput,
   Project,
   RenderJob,
   Scene,
@@ -14,6 +15,7 @@ export interface CharacterRepository {
   getById(id: string): Promise<Character | undefined>;
   create(input: CreateCharacterInput): Promise<Character>;
   update(character: Character): Promise<Character>;
+  delete(id: string): Promise<void>;
 }
 
 export interface ProjectRepository {
@@ -28,6 +30,7 @@ export interface AssetRepository {
   getById(id: string): Promise<Asset | undefined>;
   create(asset: Asset): Promise<Asset>;
   update(asset: Asset): Promise<Asset>;
+  delete(id: string): Promise<void>;
 }
 
 export interface RenderJobRepository {
@@ -39,7 +42,11 @@ export interface RenderJobRepository {
 
 export interface SceneRepository {
   list(): Promise<Scene[]>;
+  getById(id: string): Promise<Scene | undefined>;
   create(scene: Scene): Promise<Scene>;
+  createFromInput(input: CreateSceneInput): Promise<Scene>;
+  update(scene: Scene): Promise<Scene>;
+  delete(id: string): Promise<void>;
 }
 
 export interface UserSettingsRepository {

@@ -8,6 +8,7 @@ import { DreamFramePage } from "../features/dreamframe/DreamFramePage";
 import { AiEnginesPage } from "../features/engines/AiEnginesPage";
 import { NovaTonePage } from "../features/novatone/NovaTonePage";
 import { ProjectsPage } from "../features/projects/ProjectsPage";
+import { ProjectDetailPage } from "../features/projects/ProjectDetailPage";
 import { RenderQueuePage } from "../features/render-queue/RenderQueuePage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 
@@ -21,6 +22,7 @@ export function AppRoutes() {
       <Route path="/dreamframe" element={<DreamFramePage />} />
       <Route path="/novatone" element={<NovaTonePage />} />
       <Route path="/projects" element={<ProjectsPage />} />
+      <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
       <Route path="/render-queue" element={<RenderQueuePage />} />
       <Route path="/assets" element={<AssetLibraryPage />} />
       <Route path="/engines" element={<AiEnginesPage />} />

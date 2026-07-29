@@ -1,19 +1,31 @@
 # PTL AI Cluster
 
-PTL AI Cluster is the shared AI infrastructure foundation for the Parker Tech Labs creator ecosystem. It is designed to let multiple PTL products share one system for AI generation, project storage, character consistency, job processing, provider routing, and asset management.
+PTL AI Cluster is the Parker Tech Labs Mission Control workspace for modular creator AI production. It coordinates characters, projects, scenes, images, clips, audio, render jobs, assets, and AI engine configuration through one shared local-first system.
 
-Phase 1 is intentionally mock-first. It proves the application architecture and end-to-end creator workflows before connecting real GPU providers or storing production assets.
+The current app is mock-provider-first. It proves the complete creative workflow before connecting live GPU providers, Supabase, Cloudflare R2, or other production services.
+
+## Mission Control
+
+The dashboard is now the **Mission Control** operating surface. It centers the active `Eric & Maize - Monster Truck Adventure` project with:
+
+- Active project hero
+- Repository-driven project metrics
+- Scene-based production timeline
+- Creative module cards
+- PTL Producer right rail
+- Recent activity signals
+- Accurate AI engine status
 
 ## Product Modules
 
-- **PTL Character Studio**: character profiles, references, expressions, outfits, consistency prompts, and LoRA placeholders.
-- **NovaCanvas**: prompt-based image generation workspace with character/style/settings controls and mock results.
-- **DreamFrame**: image-to-video and text-to-video planning surface with clip settings, render status, and scene queue.
-- **NovaTone**: voice, music, and sound-effect workspace with dialogue fields and mock waveform display.
-- **Projects**: mixed-media project records that can link characters, images, clips, audio, storyboards, scenes, and render jobs.
-- **Render Queue**: job status, progress, retry, cancel, and output actions.
-- **Asset Library**: searchable grid/list asset manager for references, generated images, video, audio, storyboards, LoRAs, model files, and exports.
-- **AI Engines**: provider adapter registry and router for interchangeable AI backends.
+- **Character Studio**: character profiles, references, expressions, outfits, prompts, and LoRA placeholders.
+- **NovaCanvas**: project and scene-linked mock image generation.
+- **DreamFrame**: source-image-to-mock-clip scene animation workflow.
+- **NovaTone**: voice, music, and sound-effect production workspace.
+- **Projects**: project cards and project-detail command center.
+- **Render Queue**: progress, cancel, retry, source/output, project and scene actions.
+- **Asset Library**: visual media browser with project, scene, character, provider, and metadata connections.
+- **AI Engines**: provider configuration status using a shared status source.
 
 ## Install And Run
 
@@ -26,71 +38,61 @@ Useful commands:
 
 ```bash
 npm run lint
-npm test
+npm run test
 npm run build
 npm run preview
+npm audit
 ```
 
 ## Architecture
 
 ```text
 src/
-├── app/                 # App routes and Zustand store
-├── components/          # Shared shell, cards, form controls, badges
+├── app/                 # Routes and Zustand store
+├── components/
+│   └── ptl/             # Mission Control design-system components
+├── data/                # Deterministic sample data
 ├── features/            # Creator-facing product modules
-├── providers/           # AI, storage, and database provider adapters
+├── providers/           # AI, storage, database, and status placeholders
 ├── repositories/        # Repository contracts and localStorage implementations
 ├── services/            # Render orchestration and app service composition
+├── tests/               # Vitest coverage
 ├── types/               # Shared TypeScript domain model
-├── utils/               # IDs and small helpers
-├── data/                # Required sample data
-└── tests/               # Vitest coverage
+└── utils/               # IDs and project metrics
 ```
 
-Components use repository/service interfaces instead of coupling directly to Supabase or provider SDKs. The app uses local mock repositories by default so creators can test complete workflows locally.
+Components consume the app store and repository/service contracts. Local mock repositories remain the default persistence layer.
 
-## Provider Adapter Architecture
+## PTL Design System
 
-The shared `AIProvider` interface supports image, video, audio, and multimodal providers. `EngineRouter` selects a provider by generation type, required capability, user preference, and local/cloud preference.
+Design tokens and global atmosphere live in `src/styles.css` and `tailwind.config.ts`. Reusable Mission Control components live in `src/components/ptl`.
 
-Current adapters:
-
-- Mock Provider: connected and functional.
-- ComfyUI: typed local placeholder.
-- RunPod: typed cloud GPU placeholder.
-- Hugging Face: typed placeholder.
-- Local AI Server: typed placeholder.
-
-Only the Mock Provider generates assets today. The placeholders do not make fake production API calls.
+See [docs/PTL_DESIGN_SYSTEM.md](docs/PTL_DESIGN_SYSTEM.md).
 
 ## Mock Generation Flow
 
-When a creator presses Generate, the app creates a render job, queues it, progresses it through preparing and running states, calls the Mock Provider, saves a generated asset, links it back to the project, and shows a notification. This validates the workflow before real GPUs are connected.
+When a creator generates media, the app creates a render job, queues it, progresses it through preparing/running/completed states, calls the Mock Provider, saves the generated asset, links it to the selected project and scene, updates local state, and persists through refresh.
 
-## Future Integrations
+## Provider Limitations
 
-ComfyUI will connect through a local or backend-routed endpoint for image generation and character consistency workflows. RunPod will connect through a secure backend service for cloud GPU jobs, job polling, cancellation, and output handling. Cloudflare R2 will become the durable asset store for generated media and references. Supabase will provide authentication, database records, user workspaces, and eventually row-level security.
+Only the Mock Provider is connected. ComfyUI, RunPod, Hugging Face, Local AI Server, Cloudflare R2, and Supabase remain not configured placeholders. No external generation, storage, or database APIs are called in this phase.
 
 ## Security Rules
 
-Do not place secret credentials in frontend code. `VITE_` variables are visible to the browser and are only for public configuration such as Supabase anon keys or public API base URLs. RunPod keys, Cloudflare R2 secrets, Supabase service-role keys, and provider API keys must live in a secure backend service.
+Do not place secret credentials in frontend code. `VITE_` variables are browser-visible. RunPod keys, Cloudflare R2 secrets, Supabase service-role keys, and provider API keys must live in a secure backend service.
 
-Copy `.env.example` when local environment values are needed.
+## Screenshots
 
-## Sample Data
+Screenshots can be captured from the local dev server for:
 
-The app includes Eric and Maize, the `Eric & Maize - Monster Truck Adventure` project, mock image assets, mock clip/audio assets, multiple render jobs, and one failed job for retry testing.
-
-## Development Phases
-
-- **Phase 1**: Application shell, modules, mock provider, projects, assets, and render queue.
-- **Phase 2**: Supabase authentication and database integration.
-- **Phase 3**: Cloudflare R2 asset storage.
-- **Phase 4**: ComfyUI local image-generation connector.
-- **Phase 5**: RunPod cloud GPU connector.
-- **Phase 6**: Character reference and LoRA management.
-- **Phase 7**: DreamFrame multi-scene episode assembly.
-- **Phase 8**: NovaTone voice, music, and sound integration.
+- Mission Control desktop
+- Mission Control mobile
+- Character Studio
+- NovaCanvas
+- DreamFrame
+- Project Timeline
+- Asset Library
+- AI Engines
 
 ## GitHub Pages
 

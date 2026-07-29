@@ -1,47 +1,62 @@
-import type { ReactNode } from "react";
+import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import {
+  GlassPanel,
+  PageHeader as PtlPageHeader,
+  PtlButton,
+  PtlField,
+  PtlInput,
+  PtlSelect,
+  PtlTextarea,
+  StatusBadge as PtlStatusBadge,
+} from "./ptl";
 
 export function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
-  return (
-    <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-      <div>
-        <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-cyan-200">{eyebrow}</p>
-        <h2 className="text-3xl font-black tracking-normal text-white md:text-5xl">{title}</h2>
-      </div>
-      {children}
-    </div>
-  );
+  return <PtlPageHeader eyebrow={eyebrow} title={title}>{children}</PtlPageHeader>;
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <section className={`soft-card rounded-2xl p-5 ${className}`}>{children}</section>;
+  return <GlassPanel className={className}>{children}</GlassPanel>;
 }
 
-export function Button({ children, type = "button", onClick, variant = "primary" }: { children: ReactNode; type?: "button" | "submit"; onClick?: () => void; variant?: "primary" | "secondary" | "danger" }) {
-  const styles = {
-    primary: "bg-cyan-300 text-navy-950 hover:bg-cyan-200",
-    secondary: "bg-white/10 text-white hover:bg-white/15",
-    danger: "bg-rose-300 text-rose-950 hover:bg-rose-200",
-  };
+export function Button({
+  children,
+  type = "button",
+  onClick,
+  variant = "primary",
+}: {
+  children: ReactNode;
+  type?: "button" | "submit";
+  onClick?: () => void;
+  variant?: "primary" | "secondary" | "danger";
+}) {
   return (
-    <button type={type} onClick={onClick} className={`focus-ring min-h-11 rounded-xl px-4 text-sm font-black transition ${styles[variant]}`}>
+    <PtlButton type={type} onClick={onClick} variant={variant === "danger" ? "danger" : variant}>
       {children}
-    </button>
+    </PtlButton>
   );
 }
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="grid gap-2 text-sm font-bold text-slate-200">
-      {label}
-      {children}
-    </label>
-  );
+  return <PtlField label={label}>{children}</PtlField>;
 }
 
-export const inputClass = "focus-ring min-h-11 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white placeholder:text-slate-400";
-export const textareaClass = "focus-ring min-h-28 rounded-xl border border-white/10 bg-white/10 p-3 text-sm text-white placeholder:text-slate-400";
+export const inputClass =
+  "focus-ring min-h-11 rounded-[12px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.055] px-3 text-sm text-white placeholder:text-[color:var(--ptl-text-muted)]";
+export const textareaClass =
+  "focus-ring min-h-28 rounded-[12px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.055] p-3 text-sm text-white placeholder:text-[color:var(--ptl-text-muted)]";
+
+export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
+  return <PtlInput {...props} />;
+}
+
+export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <PtlTextarea {...props} />;
+}
+
+export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <PtlSelect {...props} />;
+}
 
 export function StatusBadge({ status }: { status: string }) {
-  const color = status === "connected" || status === "completed" ? "bg-teal-300/20 text-teal-100" : status === "failed" || status === "error" ? "bg-rose-300/20 text-rose-100" : "bg-cyan-300/15 text-cyan-100";
-  return <span className={`rounded-full px-3 py-1 text-xs font-black uppercase ${color}`}>{status}</span>;
+  return <PtlStatusBadge status={status} />;
 }

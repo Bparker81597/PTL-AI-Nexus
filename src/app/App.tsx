@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { AppRoutes } from "./routes";
 import { useClusterStore } from "./useClusterStore";
-import { Shell } from "../components/Shell";
+import { PtlAppShell } from "../components/ptl";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 export function App() {
   const load = useClusterStore((state) => state.load);
@@ -11,8 +12,10 @@ export function App() {
   }, [load]);
 
   return (
-    <Shell>
-      <AppRoutes />
-    </Shell>
+    <PtlAppShell>
+      <ErrorBoundary>
+        <AppRoutes />
+      </ErrorBoundary>
+    </PtlAppShell>
   );
 }

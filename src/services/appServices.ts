@@ -6,5 +6,6 @@ export const renderService = new RenderService(
   repositories.renderJobs,
   repositories.assets,
   repositories.projects,
+  repositories.scenes,
   engineRouter,
 );

@@ -3,6 +3,7 @@ import type {
   Character,
   CreateCharacterInput,
   CreateProjectInput,
+  CreateSceneInput,
   Project,
   RenderJob,
   Scene,
@@ -49,7 +50,17 @@ class LocalCollection<T extends { id: string }> {
       await this.saveAll(this.seed);
       return structuredClone(this.seed);
     }
-    return JSON.parse(raw) as T[];
+    const stored = JSON.parse(raw) as T[];
+    const merged = [...stored];
+    for (const seedItem of this.seed) {
+      if (!merged.some((item) => item.id === seedItem.id)) {
+        merged.push(seedItem);
+      }
+    }
+    if (merged.length !== stored.length) {
+      await this.saveAll(merged);
+    }
+    return merged;
   }
 
   async getById(id: string): Promise<T | undefined> {
@@ -62,6 +73,11 @@ class LocalCollection<T extends { id: string }> {
     const next = index >= 0 ? items.map((existing) => (existing.id === item.id ? item : existing)) : [item, ...items];
     await this.saveAll(next);
     return item;
+  }
+
+  async delete(id: string): Promise<void> {
+    const items = await this.list();
+    await this.saveAll(items.filter((item) => item.id !== id));
   }
 
   private async saveAll(items: T[]): Promise<void> {
@@ -99,6 +115,10 @@ export class LocalCharacterRepository implements CharacterRepository {
 
   update(character: Character): Promise<Character> {
     return this.collection.save({ ...character, updatedAt: nowIso() });
+  }
+
+  delete(id: string): Promise<void> {
+    return this.collection.delete(id);
   }
 }
 
@@ -152,6 +172,10 @@ export class LocalAssetRepository implements AssetRepository {
   update(asset: Asset): Promise<Asset> {
     return this.collection.save(asset);
   }
+
+  delete(id: string): Promise<void> {
+    return this.collection.delete(id);
+  }
 }
 
 export class LocalRenderJobRepository implements RenderJobRepository {
@@ -177,12 +201,78 @@ export class LocalRenderJobRepository implements RenderJobRepository {
 export class LocalSceneRepository implements SceneRepository {
   private readonly collection = new LocalCollection<Scene>("ptl.scenes", sampleScenes);
 
-  list(): Promise<Scene[]> {
-    return this.collection.list();
+  async list(): Promise<Scene[]> {
+    const scenes = await this.collection.list();
+    const normalized = scenes.map((scene, index) => this.normalizeScene(scene, index));
+    await Promise.all(normalized.map((scene) => this.collection.save(scene)));
+    return normalized.sort((a, b) => a.order - b.order);
+  }
+
+  getById(id: string): Promise<Scene | undefined> {
+    return this.collection.getById(id);
   }
 
   create(scene: Scene): Promise<Scene> {
     return this.collection.save(scene);
+  }
+
+  async createFromInput(input: CreateSceneInput): Promise<Scene> {
+    const timestamp = nowIso();
+    const projectScenes = (await this.list()).filter((scene) => scene.projectId === input.projectId);
+    return this.collection.save({
+      id: createId("scene"),
+      projectId: input.projectId,
+      title: input.title,
+      description: input.description,
+      order: projectScenes.length + 1,
+      characterIds: input.characterIds,
+      location: "New scene location",
+      action: "Describe the action",
+      emotion: "Curious",
+      dialogue: "",
+      motionPrompt: input.description,
+      cameraMovement: "Tracking shot",
+      duration: 5,
+      aspectRatio: "16:9",
+      resolution: "1080p",
+      fps: 24,
+      motionStrength: 0.55,
+      status: "draft",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+  }
+
+  update(scene: Scene): Promise<Scene> {
+    return this.collection.save({ ...scene, updatedAt: nowIso() });
+  }
+
+  delete(id: string): Promise<void> {
+    return this.collection.delete(id);
+  }
+
+  private normalizeScene(scene: Scene, index: number): Scene {
+    const legacy = scene as Scene & { name?: string; assetIds?: string[] };
+    return {
+      ...scene,
+      title: scene.title ?? legacy.name ?? "Untitled scene",
+      order: scene.order ?? index + 1,
+      sourceImageAssetId: scene.sourceImageAssetId ?? legacy.assetIds?.[0],
+      outputVideoAssetId: scene.outputVideoAssetId,
+      location: scene.location ?? "Monster truck stadium",
+      action: scene.action ?? scene.description,
+      emotion: scene.emotion ?? "Excited",
+      dialogue: scene.dialogue ?? "",
+      motionPrompt: scene.motionPrompt ?? scene.description,
+      cameraMovement: scene.cameraMovement ?? "Tracking shot",
+      duration: scene.duration ?? 5,
+      aspectRatio: scene.aspectRatio ?? "16:9",
+      resolution: scene.resolution ?? "1080p",
+      fps: scene.fps ?? 24,
+      motionStrength: scene.motionStrength ?? 0.55,
+      status: scene.status ?? "draft",
+      updatedAt: scene.updatedAt ?? scene.createdAt,
+    };
   }
 }
 

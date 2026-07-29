@@ -20,6 +20,7 @@ export class LocalMockStorageProvider implements AssetStorageProvider {
       type: "generated-image",
       url,
       createdAt: nowIso(),
+      isMock: true,
       metadata: { path, size: file.size, mimeType: file.type },
     };
   }

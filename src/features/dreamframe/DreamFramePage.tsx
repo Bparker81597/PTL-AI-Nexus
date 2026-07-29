@@ -1,53 +1,179 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useClusterStore } from "../../app/useClusterStore";
 import { Button, Card, Field, PageHeader, StatusBadge, inputClass, textareaClass } from "../../components/Ui";
 
+interface DreamFrameRouteState {
+  projectId?: string;
+  sceneId?: string;
+  sourceAssetId?: string;
+  characterIds?: string[];
+  motionPrompt?: string;
+  aspectRatio?: string;
+}
+
 export function DreamFramePage() {
-  const { assets, characters, projects, renderJobs, generate } = useClusterStore();
-  const [motionPrompt, setMotionPrompt] = useState("Camera tracks the monster truck as it jumps through teal energy rings");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const routeState = (location.state ?? {}) as DreamFrameRouteState;
+  const { assets, characters, projects, renderJobs, scenes, generate, refreshAll } = useClusterStore();
+  const [selectedProjectId, setSelectedProjectId] = useState(routeState.projectId ?? params.get("projectId") ?? projects[0]?.id ?? "");
+  const [selectedSceneId, setSelectedSceneId] = useState(routeState.sceneId ?? params.get("sceneId") ?? "");
+  const [sourceAssetId, setSourceAssetId] = useState(routeState.sourceAssetId ?? params.get("sourceAssetId") ?? "");
+  const [selectedCharacterIds, setSelectedCharacterIds] = useState<string[]>(
+    routeState.characterIds ?? params.get("characterIds")?.split(",").filter(Boolean) ?? characters.slice(0, 2).map((character) => character.id),
+  );
+  const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
+  const sourceAsset = assets.find((asset) => asset.id === sourceAssetId);
+  const projectScenes = scenes.filter((scene) => scene.projectId === selectedProjectId);
+  const sourceImages = assets.filter((asset) => asset.projectId === selectedProjectId && asset.type === "generated-image");
+  const [motionPrompt, setMotionPrompt] = useState(routeState.motionPrompt ?? selectedScene?.motionPrompt ?? "Camera tracks the monster truck as it jumps through teal energy rings");
+  const [actionPrompt, setActionPrompt] = useState(selectedScene?.action ?? "Eric and Maize cheer with consistent animated character motion.");
+  const [cameraMovement, setCameraMovement] = useState(selectedScene?.cameraMovement ?? "Tracking shot");
+  const [duration, setDuration] = useState<number>(selectedScene?.duration ?? 5);
+  const [aspectRatio, setAspectRatio] = useState(routeState.aspectRatio ?? selectedScene?.aspectRatio ?? "16:9");
+  const [resolution, setResolution] = useState(selectedScene?.resolution ?? "1080p");
+  const [fps, setFps] = useState(selectedScene?.fps ?? 24);
+  const [motionStrength, setMotionStrength] = useState(selectedScene?.motionStrength ?? 0.68);
+  const [seed, setSeed] = useState(4102);
+  const [negativeMotionPrompt, setNegativeMotionPrompt] = useState("warped motion, flicker, face drift, broken wheels");
+  const [validation, setValidation] = useState("");
+  const [lastJobId, setLastJobId] = useState<string | undefined>();
+
+  const lastJob = renderJobs.find((job) => job.id === lastJobId);
+  const lastAsset = useMemo(
+    () => assets.find((asset) => lastJob?.outputAssetIds.includes(asset.id)),
+    [assets, lastJob],
+  );
+
+  useEffect(() => {
+    if (!lastJobId) return;
+    const timer = window.setInterval(() => void refreshAll(), 350);
+    return () => window.clearInterval(timer);
+  }, [lastJobId, refreshAll]);
+
+  useEffect(() => {
+    if (!selectedScene) return;
+    setMotionPrompt(selectedScene.motionPrompt);
+    setActionPrompt(selectedScene.action);
+    setCameraMovement(selectedScene.cameraMovement);
+    setDuration(selectedScene.duration);
+    setAspectRatio(selectedScene.aspectRatio);
+    setResolution(selectedScene.resolution);
+    setFps(selectedScene.fps);
+    setMotionStrength(selectedScene.motionStrength);
+    if (selectedScene.sourceImageAssetId) setSourceAssetId(selectedScene.sourceImageAssetId);
+    setSelectedCharacterIds(selectedScene.characterIds);
+  }, [selectedScene]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    await generate({
-      projectId: projects[0]?.id,
+    if (!selectedProjectId || !selectedSceneId || !sourceAssetId || !motionPrompt.trim()) {
+      setValidation("Select a project, scene, source image, and motion prompt before generating a clip.");
+      return;
+    }
+    setValidation("");
+    const job = await generate({
+      projectId: selectedProjectId,
       generationType: "image-to-video",
-      prompt: motionPrompt,
-      characterIds: characters.map((character) => character.id),
-      sourceAssetIds: assets.filter((asset) => asset.type === "generated-image").slice(0, 1).map((asset) => asset.id),
-      settings: { camera: "tracking shot", duration: 5, aspectRatio: "16:9", resolution: "1080p", fps: 24, motionStrength: 0.68 },
+      prompt: `${motionPrompt}\nCharacter action: ${actionPrompt}`,
+      negativePrompt: negativeMotionPrompt,
+      characterIds: selectedCharacterIds,
+      sourceAssetIds: [sourceAssetId],
+      settings: {
+        sceneId: selectedSceneId,
+        cameraMovement,
+        duration,
+        aspectRatio,
+        resolution,
+        fps,
+        motionStrength,
+        seed,
+        negativeMotionPrompt,
+      },
     });
+    setLastJobId(job.id);
+    navigate(`/render-queue?projectId=${selectedProjectId}&generationType=image-to-video`);
   };
 
   return (
     <>
-      <PageHeader eyebrow="DreamFrame" title="Mini-clip generation" />
-      <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
+      <PageHeader eyebrow="DreamFrame" title="Scene-animation workspace" />
+      <div className="grid gap-4 xl:grid-cols-[440px_1fr]">
         <Card>
           <form className="grid gap-4" onSubmit={submit}>
-            <Field label="Source image"><select className={inputClass}>{assets.filter((asset) => asset.type === "generated-image").map((asset) => <option key={asset.id}>{asset.name}</option>)}</select></Field>
-            <Field label="Character"><select className={inputClass}>{characters.map((character) => <option key={character.id}>{character.name}</option>)}</select></Field>
-            <Field label="Motion prompt"><textarea className={textareaClass} value={motionPrompt} onChange={(e) => setMotionPrompt(e.target.value)} /></Field>
+            {validation && <p className="rounded-xl bg-rose-300/15 p-3 text-sm font-bold text-rose-100">{validation}</p>}
+            <Field label="Project selector">
+              <select className={inputClass} value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)} required>
+                {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+              </select>
+            </Field>
+            <Field label="Scene selector">
+              <select className={inputClass} value={selectedSceneId} onChange={(event) => setSelectedSceneId(event.target.value)} required>
+                <option value="">Select scene</option>
+                {projectScenes.map((scene) => <option key={scene.id} value={scene.id}>{scene.order}. {scene.title}</option>)}
+              </select>
+            </Field>
+            <Field label="Source-image selector">
+              <select className={inputClass} value={sourceAssetId} onChange={(event) => setSourceAssetId(event.target.value)} required>
+                <option value="">Select source image</option>
+                {sourceImages.map((asset) => <option key={asset.id} value={asset.id}>{asset.name}</option>)}
+              </select>
+            </Field>
+            <Field label="Character selector">
+              <select
+                className={inputClass}
+                multiple
+                value={selectedCharacterIds}
+                onChange={(event) => setSelectedCharacterIds(Array.from(event.target.selectedOptions, (option) => option.value))}
+              >
+                {characters.map((character) => <option key={character.id} value={character.id}>{character.name}</option>)}
+              </select>
+            </Field>
+            <Field label="Motion prompt"><textarea className={textareaClass} value={motionPrompt} onChange={(event) => setMotionPrompt(event.target.value)} /></Field>
+            <Field label="Character-action prompt"><textarea className={textareaClass} value={actionPrompt} onChange={(event) => setActionPrompt(event.target.value)} /></Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Camera"><select className={inputClass}><option>Tracking shot</option><option>Dolly in</option><option>Orbit</option></select></Field>
-              <Field label="Duration"><select className={inputClass}><option>3 seconds</option><option>5 seconds</option><option>8 seconds</option><option>10 seconds</option></select></Field>
-              <Field label="Aspect ratio"><select className={inputClass}><option>16:9</option><option>9:16</option></select></Field>
-              <Field label="Resolution"><select className={inputClass}><option>1080p</option><option>720p</option></select></Field>
-              <Field label="FPS"><input className={inputClass} type="number" defaultValue={24} /></Field>
-              <Field label="Motion strength"><input className={inputClass} type="range" min={0} max={1} step={0.01} defaultValue={0.68} /></Field>
+              <Field label="Camera movement"><input className={inputClass} value={cameraMovement} onChange={(event) => setCameraMovement(event.target.value)} /></Field>
+              <Field label="Duration"><select className={inputClass} value={duration} onChange={(event) => setDuration(Number(event.target.value))}><option value={3}>3 seconds</option><option value={5}>5 seconds</option><option value={8}>8 seconds</option><option value={10}>10 seconds</option></select></Field>
+              <Field label="Aspect ratio"><select className={inputClass} value={aspectRatio} onChange={(event) => setAspectRatio(event.target.value)}><option>16:9</option><option>9:16</option><option>1:1</option></select></Field>
+              <Field label="Resolution"><select className={inputClass} value={resolution} onChange={(event) => setResolution(event.target.value)}><option>1080p</option><option>720p</option></select></Field>
+              <Field label="FPS"><input className={inputClass} type="number" value={fps} onChange={(event) => setFps(Number(event.target.value))} /></Field>
+              <Field label="Seed"><input className={inputClass} type="number" value={seed} onChange={(event) => setSeed(Number(event.target.value))} /></Field>
             </div>
-            <Button type="submit">Generate Clip</Button>
+            <Field label="Motion strength"><input className={inputClass} type="range" min={0} max={1} step={0.01} value={motionStrength} onChange={(event) => setMotionStrength(Number(event.target.value))} /></Field>
+            <Field label="Negative motion prompt"><textarea className={textareaClass} value={negativeMotionPrompt} onChange={(event) => setNegativeMotionPrompt(event.target.value)} /></Field>
+            <Button type="submit">{selectedProjectId && selectedSceneId && sourceAssetId ? "Generate Simulated Clip" : "Complete Required Fields"}</Button>
           </form>
         </Card>
         <div className="grid gap-4">
           <Card>
-            <h3 className="mb-4 text-xl font-black">Mock video preview</h3>
-            <div className="grid aspect-video place-items-center rounded-2xl bg-gradient-to-br from-cyan-300/25 via-purple-300/20 to-teal-300/20 text-center">
-              <div><p className="text-2xl font-black">DreamFrame Preview</p><p className="text-slate-300">Video connector placeholder</p></div>
-            </div>
+            <h3 className="mb-4 text-xl font-black">Source-image preview</h3>
+            {sourceAsset ? (
+              <img src={sourceAsset.url} alt={sourceAsset.name} className="aspect-video rounded-2xl object-cover" />
+            ) : (
+              <div className="grid aspect-video place-items-center rounded-2xl bg-white/10 text-slate-300">Select a source image</div>
+            )}
+          </Card>
+          <Card>
+            <h3 className="mb-4 text-xl font-black">Render status</h3>
+            {lastJob ? (
+              <div>
+                <div className="flex items-center justify-between"><strong>{lastJob.name}</strong><StatusBadge status={lastJob.status} /></div>
+                <div className="mt-3 h-2 rounded-full bg-white/10"><div className="h-2 rounded-full bg-cyan-300" style={{ width: `${lastJob.progress}%` }} /></div>
+                {lastAsset && <Button variant="secondary" onClick={() => navigate("/assets")}>Open completed clip in Asset Library</Button>}
+              </div>
+            ) : (
+              <p className="text-slate-300">No new clip job started yet.</p>
+            )}
           </Card>
           <Card>
             <h3 className="mb-4 text-xl font-black">Scene queue</h3>
-            <div className="grid gap-3">{renderJobs.filter((job) => job.generationType.includes("video")).map((job) => <div key={job.id} className="flex items-center justify-between rounded-xl bg-white/7 p-3"><span className="font-bold">{job.name}</span><StatusBadge status={job.status} /></div>)}</div>
+            <div className="grid gap-3">
+              {renderJobs.filter((job) => job.generationType.includes("video")).map((job) => (
+                <div key={job.id} className="flex items-center justify-between rounded-xl bg-white/7 p-3"><span className="font-bold">{job.name}</span><StatusBadge status={job.status} /></div>
+              ))}
+            </div>
           </Card>
         </div>
       </div>
