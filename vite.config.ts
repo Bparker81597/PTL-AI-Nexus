@@ -2,7 +2,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "/PTL-AI-Cluster/",
+  base: "/PTL-AI-Nexus/",
   plugins: [react()],
   test: {
     environment: "jsdom",
