@@ -25,6 +25,21 @@ export type ProductionPhase =
 export type EpisodeStatus = "planning" | "writing" | "storyboard" | "animation" | "audio" | "review" | "completed";
 export type SceneStageState = "not-started" | "in-progress" | "blocked" | "ready-for-review" | "approved" | "completed";
 export type ApprovalState = "not-ready" | "needs-review" | "approved" | "changes-requested";
+export type CharacterStatus = "concept" | "developing" | "production-ready" | "archived";
+export type CharacterReadinessCategory =
+  | "identity"
+  | "appearance"
+  | "expressions"
+  | "outfits"
+  | "personality"
+  | "relationships"
+  | "voice"
+  | "animation"
+  | "continuity"
+  | "productionLinks"
+  | "assets";
+export type CharacterReadinessState = "missing" | "started" | "in-progress" | "ready" | "complete";
+export type CharacterReferenceStatus = "draft" | "generated" | "review" | "approved" | "retired";
 
 export interface SceneStageProgress {
   story: SceneStageState;
@@ -45,6 +60,183 @@ export interface ProductionBlocker {
   message: string;
   severity: "info" | "warning" | "critical";
   resolved: boolean;
+}
+
+export interface CharacterReadinessRecord {
+  category: CharacterReadinessCategory;
+  state: CharacterReadinessState;
+  notes?: string;
+  updatedAt: string;
+}
+
+export interface CharacterExpression {
+  id: string;
+  name: string;
+  emotion: string;
+  assetId?: string;
+  status: CharacterReferenceStatus;
+  prompt?: string;
+  animationNotes?: string;
+  usageNotes?: string;
+  sceneIds?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CharacterOutfit {
+  id: string;
+  name: string;
+  category: "default" | "school" | "adventure" | "seasonal" | "sleepwear" | "special-event" | "weather" | "costume";
+  description?: string;
+  frontAssetId?: string;
+  backAssetId?: string;
+  accessories?: string[];
+  footwear?: string;
+  palette?: string[];
+  status: CharacterReferenceStatus;
+  continuityNotes?: string;
+  episodeIds?: string[];
+  sceneIds?: string[];
+}
+
+export interface CharacterRelationship {
+  id: string;
+  sourceCharacterId: string;
+  targetCharacterId: string;
+  type: "family" | "friend" | "rival" | "mentor" | "teammate" | "other";
+  label: string;
+  closeness: 1 | 2 | 3 | 4 | 5;
+  summary?: string;
+  dynamic?: string;
+  conflictNotes?: string;
+  supportNotes?: string;
+  productionNotes?: string;
+  episodeIds?: string[];
+  sceneIds?: string[];
+}
+
+export interface CharacterVoiceProfile {
+  status: CharacterReadinessState;
+  tone?: string;
+  pitch?: string;
+  speakingSpeed?: string;
+  dialectNotes?: string;
+  emotionalRange?: string[];
+  pronunciationNotes?: string;
+  voicePrompt?: string;
+  referenceAssetIds?: string[];
+  dialogueExamples?: string[];
+  providerVoiceId?: string;
+  continuityNotes?: string;
+}
+
+export interface CharacterAnimationReference {
+  id: string;
+  name: string;
+  category: "idle" | "walk" | "run" | "jump" | "wave" | "laugh" | "cry" | "dance" | "point" | "celebrate" | "other";
+  previewAssetId?: string;
+  sourceAssetId?: string;
+  status: CharacterReferenceStatus;
+  notes?: string;
+  sceneIds?: string[];
+  providerMetadata?: Record<string, unknown>;
+  updatedAt: string;
+}
+
+export interface CharacterProp {
+  id: string;
+  assetId?: string;
+  name: string;
+  importance: "minor" | "recurring" | "signature";
+  description?: string;
+  ownership?: string;
+  continuityNotes?: string;
+  sceneIds?: string[];
+  status: CharacterReferenceStatus;
+}
+
+export interface CharacterContinuityRule {
+  id: string;
+  title: string;
+  rule: string;
+  category: "appearance" | "outfit" | "prop" | "behavior" | "voice" | "animation" | "relationship" | "story";
+  severity: "informational" | "important" | "critical";
+  active: boolean;
+  outfitIds?: string[];
+  episodeIds?: string[];
+  sceneIds?: string[];
+  referenceAssetIds?: string[];
+  notes?: string;
+}
+
+export interface CharacterNote {
+  id: string;
+  title: string;
+  type: "director" | "writer" | "animator" | "voice" | "continuity" | "design" | "general";
+  content: string;
+  authorLabel: string;
+  episodeId?: string;
+  sceneId?: string;
+  pinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CharacterBible {
+  version: string;
+  slug?: string;
+  birthday?: string;
+  grade?: string;
+  pronouns?: string;
+  favoriteColor?: string;
+  favoriteFood?: string;
+  favoriteActivity?: string;
+  importantNotes?: string;
+  biggestDream?: string;
+  biggestFear?: string;
+  accentColor?: string;
+  accentSoftColor?: string;
+  currentAssignment?: string;
+  currentOutfit?: string;
+  currentExpression?: string;
+  currentVoiceStatus?: CharacterReadinessState;
+  currentAnimationStatus?: CharacterReadinessState;
+  requiredAssetNotes?: string[];
+  appearanceNotes?: {
+    hair?: string;
+    eyes?: string;
+    permanentAccessories?: string[];
+    physicalNotes?: string;
+    scaleReference?: string;
+  };
+  personalityGuide?: {
+    coreTraits?: string[];
+    likes?: string[];
+    dislikes?: string[];
+    humorStyle?: string;
+    leadershipStyle?: string;
+    problemSolving?: string;
+    learningStyle?: string;
+    communicationStyle?: string;
+    comfortItems?: string[];
+    reactions?: {
+      happy?: string;
+      scared?: string;
+      excited?: string;
+      embarrassed?: string;
+      frustrated?: string;
+      curious?: string;
+    };
+  };
+  readiness?: CharacterReadinessRecord[];
+  expressions?: CharacterExpression[];
+  outfits?: CharacterOutfit[];
+  relationships?: CharacterRelationship[];
+  voiceProfile?: CharacterVoiceProfile;
+  animationReferences?: CharacterAnimationReference[];
+  props?: CharacterProp[];
+  continuityRules?: CharacterContinuityRule[];
+  notes?: CharacterNote[];
 }
 
 export type GenerationType =
@@ -84,12 +276,21 @@ export interface Asset {
 export interface Character {
   id: string;
   name: string;
+  slug?: string;
+  displayName?: string;
+  projectId?: string;
   nickname?: string;
   role?: string;
   age?: string;
+  pronouns?: string;
   species?: string;
   occupation?: string;
   status?: string;
+  shortDescription?: string;
+  heroAssetId?: string;
+  portraitAssetId?: string;
+  bibleVersion?: string;
+  bible?: CharacterBible;
   description: string;
   ageRange?: string;
   visualStyle: string;

@@ -52,10 +52,9 @@ describe("connected workflow routes", () => {
   it("opens a character detail page", async () => {
     renderRoute("/characters/char-brooklyn");
 
-    expect((await screen.findAllByRole("heading", { name: "Brooklyn" })).length).toBeGreaterThan(0);
-    expect(screen.getByText("Reference gallery")).toBeInTheDocument();
-    expect(screen.getByText("Production notes")).toBeInTheDocument();
-    expect(screen.getByText("Voice profile")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Brooklyn Character Bible" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Character Bible sections")).toBeInTheDocument();
+    expect(screen.getByText("Production Readiness")).toBeInTheDocument();
     expect(screen.getByText("Use in NovaCanvas")).toBeInTheDocument();
   });
 

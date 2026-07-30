@@ -1,12 +1,35 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useClusterStore } from "../../app/useClusterStore";
-import { FeaturePanel, GlassPanel, MediaPreview, PageHeader, PtlButton, PtlField, PtlInput, PtlTextarea, SectionHeader } from "../../components/ptl";
+import {
+  CharacterArtwork,
+  FeaturePanel,
+  GlassPanel,
+  PageHeader,
+  PtlButton,
+  PtlField,
+  PtlInput,
+  PtlProgress,
+  PtlSelect,
+  PtlTextarea,
+  SectionHeader,
+  StatusBadge,
+} from "../../components/ptl";
+import type { Character } from "../../types/domain";
+import { assetsForCharacter, characterUpdatedTime, episodesForCharacter, projectsForCharacter, scenesForCharacter } from "../../utils/characterSelectors";
+import { calculateCharacterReadiness } from "../../utils/characterReadiness";
+
+type SortMode = "name" | "readiness" | "updated";
+type ReadinessFilter = "all" | "needs-work" | "ready";
 
 export function CharacterStudioPage() {
-  const { characters, projects, scenes, assets, productionContext, createCharacter } = useClusterStore();
-  const [selectedCharacterId, setSelectedCharacterId] = useState(characters[0]?.id);
-  const selected = characters.find((character) => character.id === selectedCharacterId) ?? characters[0];
+  const { characters, projects, episodes, scenes, assets, renderJobs, productionContext, createCharacter } = useClusterStore();
+  const [query, setQuery] = useState("");
+  const [projectFilter, setProjectFilter] = useState(productionContext.activeProjectId ?? "all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [readinessFilter, setReadinessFilter] = useState<ReadinessFilter>("all");
+  const [sortMode, setSortMode] = useState<SortMode>("name");
+  const [activeOnly, setActiveOnly] = useState(false);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -14,95 +37,125 @@ export function CharacterStudioPage() {
     consistencyPrompt: "",
   });
 
+  const characterCards = useMemo(
+    () =>
+      characters
+        .map((character) => ({
+          character,
+          readiness: calculateCharacterReadiness(character, assets, scenes, episodes, renderJobs),
+          projects: projectsForCharacter(character.id, projects),
+          scenes: scenesForCharacter(character.id, scenes),
+          episodes: episodesForCharacter(character.id, episodes, scenes),
+          assets: assetsForCharacter(character.id, assets),
+        }))
+        .filter(({ character, readiness, projects: linkedProjects }) => {
+          const matchesQuery = [character.name, character.displayName, character.role, character.shortDescription, character.description]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+            .includes(query.toLowerCase());
+          const matchesProject = projectFilter === "all" || linkedProjects.some((project) => project.id === projectFilter) || character.projectId === projectFilter;
+          const matchesStatus = statusFilter === "all" || character.status === statusFilter;
+          const matchesReadiness =
+            readinessFilter === "all" ||
+            (readinessFilter === "ready" && readiness.productionReady) ||
+            (readinessFilter === "needs-work" && !readiness.productionReady);
+          const matchesActive = !activeOnly || productionContext.activeCharacterIds.includes(character.id);
+          return matchesQuery && matchesProject && matchesStatus && matchesReadiness && matchesActive;
+        })
+        .sort((a, b) => {
+          if (sortMode === "readiness") return b.readiness.percentage - a.readiness.percentage;
+          if (sortMode === "updated") return characterUpdatedTime(b.character) - characterUpdatedTime(a.character);
+          return a.character.name.localeCompare(b.character.name);
+        }),
+    [activeOnly, assets, characters, episodes, productionContext.activeCharacterIds, projectFilter, projects, query, readinessFilter, renderJobs, scenes, sortMode, statusFilter],
+  );
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!form.name.trim()) return;
-    const character = await createCharacter(form);
-    setSelectedCharacterId(character.id);
+    await createCharacter(form);
     setForm({ name: "", description: "", visualStyle: "Bright 3D animated adventure", consistencyPrompt: "" });
   };
 
   return (
     <div className="grid gap-5">
-      <PageHeader eyebrow="Character Bible" title="Character Studio">
-        {selected && <Link to={`/characters/${selected.id}`}><PtlButton>Open {selected.name}</PtlButton></Link>}
+      <PageHeader eyebrow="Character Bible Library" title="Character Studio">
+        <Link to="/characters/char-brooklyn"><PtlButton>Open Brooklyn Bible</PtlButton></Link>
       </PageHeader>
+
+      <FeaturePanel>
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--ptl-violet-soft)]">Production character library</p>
+            <h2 className="mt-2 font-display text-2xl font-semibold">PTL Crew character bibles</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--ptl-text-secondary)]">
+              Search, filter, and open focused Character Bibles for reusable production assets. Active scene characters stay highlighted from the current production context.
+            </p>
+          </div>
+          <StatusBadge status={`${productionContext.activeCharacterIds.length} active context characters`} />
+        </div>
+      </FeaturePanel>
+
       <GlassPanel>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--ptl-cyan-soft)]">Active production usage</p>
-        <p className="mt-2 text-sm text-[color:var(--ptl-text-secondary)]">
-          Active scene characters are highlighted. {productionContext.activeCharacterIds.length} character profiles are currently in production context.
-        </p>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <PtlField label="Search">
+            <PtlInput aria-label="Search characters" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brooklyn, creator, voice..." />
+          </PtlField>
+          <PtlField label="Project">
+            <PtlSelect value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}>
+              <option value="all">All projects</option>
+              {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+            </PtlSelect>
+          </PtlField>
+          <PtlField label="Status">
+            <PtlSelect value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <option value="all">All statuses</option>
+              {[...new Set(characters.map((character) => character.status ?? "concept"))].map((status) => <option key={status} value={status}>{status}</option>)}
+            </PtlSelect>
+          </PtlField>
+          <PtlField label="Readiness">
+            <PtlSelect value={readinessFilter} onChange={(event) => setReadinessFilter(event.target.value as ReadinessFilter)}>
+              <option value="all">All readiness</option>
+              <option value="ready">Production ready</option>
+              <option value="needs-work">Needs work</option>
+            </PtlSelect>
+          </PtlField>
+          <PtlField label="Sort">
+            <PtlSelect value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>
+              <option value="name">Name</option>
+              <option value="readiness">Readiness</option>
+              <option value="updated">Recently updated</option>
+            </PtlSelect>
+          </PtlField>
+          <label className="flex min-h-11 items-center gap-2 self-end rounded-[12px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.055] px-3 text-sm text-white">
+            <input type="checkbox" checked={activeOnly} onChange={(event) => setActiveOnly(event.target.checked)} />
+            Active production only
+          </label>
+        </div>
       </GlassPanel>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(280px,360px)_1fr]">
-        <GlassPanel>
-          <SectionHeader eyebrow="Library" title="Production cards" />
-          <div className="grid gap-3">
-            {characters.map((character) => (
-              <button
-                key={character.id}
-                type="button"
-                onClick={() => setSelectedCharacterId(character.id)}
-                className={`focus-ring overflow-hidden rounded-[18px] border text-left transition hover:-translate-y-0.5 hover:bg-[color:var(--ptl-bg-hover)] ${
-                  productionContext.activeCharacterIds.includes(character.id)
-                    ? "border-[color:var(--ptl-border-active)] bg-[color:var(--ptl-bg-hover)] shadow-[var(--ptl-glow-cyan)]"
-                    : selected?.id === character.id ? "border-[color:var(--ptl-border-violet)] bg-violet-400/10" : "border-[color:var(--ptl-border-subtle)] bg-white/[0.03]"
-                }`}
-              >
-                <MediaPreview src={character.portrait || character.heroImage || character.referenceImages[0]?.url} alt={`${character.name} portrait`} className="aspect-[5/3] rounded-b-none" />
-                <div className="p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-display text-lg font-semibold">{character.name}</h3>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--ptl-violet-soft)]">{character.role ?? "Character"}</p>
-                    </div>
-                    <span className="rounded-[10px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.04] px-2 py-1 text-xs">{character.status ?? "Active"}</span>
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-[color:var(--ptl-text-secondary)]">{character.personality || character.description}</p>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-[color:var(--ptl-text-muted)]">
-                    <span>{projects.filter((project) => project.characterIds.includes(character.id)).length} projects</span>
-                    <span>{scenes.filter((scene) => scene.characterIds.includes(character.id)).length} scenes</span>
-                    <span>{assets.filter((asset) => asset.characterIds?.includes(character.id) || asset.characterId === character.id).length} assets</span>
-                    <span>{productionContext.activeCharacterIds.includes(character.id) ? "Active scene" : character.friends?.slice(0, 1).join(", ") || "No links"}</span>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </GlassPanel>
-
-        {selected && (
-          <FeaturePanel>
-            <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-              <div>
-                <MediaPreview src={selected.referenceImages[0]?.url} alt={`${selected.name} selected preview`} className="aspect-[4/5]" />
-              </div>
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--ptl-violet-soft)]">Selected Character Bible</p>
-                <h2 className="font-display text-3xl font-semibold">{selected.name}</h2>
-                <p className="mt-1 text-sm font-semibold text-[color:var(--ptl-cyan-soft)]">{selected.role ?? "Character"} · {selected.occupation ?? "Production asset"}</p>
-                <p className="mt-3 leading-7 text-[color:var(--ptl-text-secondary)]">{selected.biography || selected.description}</p>
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  <Info label="Age" value={selected.age ?? selected.ageRange ?? "Not set"} />
-                  <Info label="Visual Style" value={selected.visualStyle} />
-                  <Info label="Default Outfit" value={selected.defaultOutfit ?? "Not set"} />
-                  <Info label="Scenes" value={scenes.filter((scene) => scene.characterIds.includes(selected.id)).length} />
-                </div>
-                <div className="mt-5 rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
-                  <p className="text-xs uppercase tracking-[0.14em] text-[color:var(--ptl-text-muted)]">Voice profile</p>
-                  <p className="mt-2 text-sm text-[color:var(--ptl-text-secondary)]">{selected.speakingStyle || selected.voiceNotes || "Voice notes not set."}</p>
-                </div>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {selected.expressions.map((expression) => <span key={expression} className="rounded-[10px] border border-violet-200/20 bg-violet-300/10 px-3 py-2 text-sm">{expression}</span>)}
-                </div>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {selected.colors.map((color) => <span key={color} className="h-9 w-9 rounded-[10px] border border-white/20" style={{ backgroundColor: color }} aria-label={color} />)}
-                </div>
-              </div>
-            </div>
-          </FeaturePanel>
-        )}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {characterCards.map(({ character, readiness, projects: linkedProjects, scenes: linkedScenes, episodes: linkedEpisodes, assets: linkedAssets }) => (
+          <CharacterLibraryCard
+            key={character.id}
+            character={character}
+            projectName={linkedProjects[0]?.name ?? "Unassigned"}
+            readiness={readiness.percentage}
+            productionReady={readiness.productionReady}
+            episodeCount={linkedEpisodes.length}
+            sceneCount={linkedScenes.length}
+            assetCount={linkedAssets.length}
+            active={productionContext.activeCharacterIds.includes(character.id)}
+          />
+        ))}
       </div>
+
+      {characterCards.length === 0 && (
+        <GlassPanel>
+          <p className="text-sm text-[color:var(--ptl-text-secondary)]">No characters match the current library filters.</p>
+        </GlassPanel>
+      )}
 
       <GlassPanel>
         <SectionHeader eyebrow="Create" title="New character profile" />
@@ -118,11 +171,58 @@ export function CharacterStudioPage() {
   );
 }
 
-function Info({ label, value }: { label: string; value: string | number }) {
+function CharacterLibraryCard({
+  character,
+  projectName,
+  readiness,
+  productionReady,
+  episodeCount,
+  sceneCount,
+  assetCount,
+  active,
+}: {
+  character: Character;
+  projectName: string;
+  readiness: number;
+  productionReady: boolean;
+  episodeCount: number;
+  sceneCount: number;
+  assetCount: number;
+  active: boolean;
+}) {
+  const preview = character.portrait || character.heroImage || character.referenceImages[0]?.url;
   return (
-    <div className="rounded-[14px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-3">
-      <p className="text-xs uppercase tracking-[0.14em] text-[color:var(--ptl-text-muted)]">{label}</p>
-      <p className="mt-1 text-sm font-semibold">{value}</p>
+    <article className={`overflow-hidden rounded-[20px] border bg-[color:var(--ptl-bg-panel)] transition hover:-translate-y-0.5 hover:border-[color:var(--ptl-border-active)] ${active ? "border-[color:var(--ptl-border-active)] shadow-[var(--ptl-glow-cyan)]" : "border-[color:var(--ptl-border-subtle)]"}`}>
+      <CharacterArtwork src={preview} alt={`${character.name} approved portrait`} variant="portrait" fit="contain" className="rounded-b-none border-0" />
+      <div className="grid gap-3 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl font-semibold">{character.displayName ?? character.name}</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--ptl-violet-soft)]">{character.role ?? "Character"}</p>
+          </div>
+          <StatusBadge status={character.status ?? "concept"} />
+        </div>
+        <p className="line-clamp-2 text-sm leading-6 text-[color:var(--ptl-text-secondary)]">{character.shortDescription ?? character.description}</p>
+        <PtlProgress value={readiness} label={`Production readiness ${readiness}%`} />
+        <div className="grid grid-cols-3 gap-2 text-center text-xs text-[color:var(--ptl-text-secondary)]">
+          <Stat label="Episodes" value={episodeCount} />
+          <Stat label="Scenes" value={sceneCount} />
+          <Stat label="Assets" value={assetCount} />
+        </div>
+        <p className="text-xs text-[color:var(--ptl-text-muted)]">{projectName} · {productionReady ? "Ready for production" : "Bible needs work"}</p>
+        <Link className="focus-ring inline-flex min-h-11 items-center justify-center rounded-[12px] bg-[image:var(--ptl-gradient-primary)] px-4 text-sm font-semibold text-[#03101b]" to={`/characters/${character.id}`}>
+          Open Character Bible
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-[12px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-2">
+      <p className="font-display text-lg font-semibold text-white">{value}</p>
+      <p className="text-[10px] uppercase tracking-[0.12em]">{label}</p>
     </div>
   );
 }

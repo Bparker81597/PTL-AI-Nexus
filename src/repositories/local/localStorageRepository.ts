@@ -129,17 +129,25 @@ export class LocalCharacterRepository implements CharacterRepository {
     return this.collection.save({
       id: createId("char"),
       name: input.name,
+      slug: input.name.toLowerCase().replaceAll(" ", "-"),
+      displayName: input.name,
+      projectId: "",
       nickname: "",
       role: "Character",
       age: "",
+      pronouns: "",
       species: "Human",
       occupation: "",
-      status: "Draft",
+      status: "concept",
       description: input.description,
+      shortDescription: input.description,
       visualStyle: input.visualStyle,
       heroImage: "",
+      heroAssetId: "",
       gallery: [],
       portrait: "",
+      portraitAssetId: "",
+      bibleVersion: "2.0-foundation",
       referenceImages: [],
       expressions: ["Neutral", "Happy"],
       outfits: ["Default outfit"],
@@ -176,6 +184,7 @@ export class LocalCharacterRepository implements CharacterRepository {
       created: timestamp,
       updated: timestamp,
       tags: [],
+      bible: this.createDefaultBible(input.name),
     });
   }
 
@@ -190,19 +199,33 @@ export class LocalCharacterRepository implements CharacterRepository {
 
   private withBibleDefaults(character: Character): Character {
     const seed = sampleCharacters.find((item) => item.id === character.id);
-    const merged = seed && this.isLegacySeedCharacter(character) ? { ...character, ...seed } : seed ? { ...seed, ...character } : character;
+    const shouldUpgradeSeedBible = Boolean(seed?.seriesId === "ptl-crew" && character.bibleVersion !== seed.bibleVersion);
+    const merged =
+      seed && (this.isLegacySeedCharacter(character) || shouldUpgradeSeedBible)
+        ? { ...character, ...seed, description: character.description ?? seed.description, updatedAt: character.updatedAt ?? seed.updatedAt }
+        : seed
+          ? { ...seed, ...character }
+          : character;
     const colors = merged.colors.length ? merged.colors : seed?.colors ?? ["#55D6FF", "#41E6C3"];
     return {
       ...merged,
+      slug: merged.slug ?? merged.bible?.slug ?? merged.name.toLowerCase().replaceAll(" ", "-"),
+      displayName: merged.displayName ?? merged.name,
+      projectId: merged.projectId ?? merged.projects?.[0] ?? "",
       nickname: merged.nickname ?? "",
       role: merged.role ?? "Character",
       age: merged.age ?? merged.ageRange ?? "",
+      pronouns: merged.pronouns ?? "",
       species: merged.species ?? "Human",
       occupation: merged.occupation ?? "",
-      status: merged.status ?? "Active",
+      status: merged.status ?? "concept",
+      shortDescription: merged.shortDescription ?? merged.description,
       heroImage: merged.heroImage ?? merged.referenceImages[0]?.url ?? "",
+      heroAssetId: merged.heroAssetId ?? merged.referenceImages[0]?.id ?? "",
       gallery: merged.gallery ?? merged.referenceImages.map((asset) => asset.url),
       portrait: merged.portrait ?? merged.referenceImages[0]?.url ?? "",
+      portraitAssetId: merged.portraitAssetId ?? merged.referenceImages[0]?.id ?? "",
+      bibleVersion: merged.bibleVersion ?? merged.bible?.version ?? "2.0-foundation",
       accessories: merged.accessories ?? [],
       colorPalette: merged.colorPalette ?? colors,
       silhouette: merged.silhouette ?? "",
@@ -235,8 +258,56 @@ export class LocalCharacterRepository implements CharacterRepository {
       interests: merged.interests ?? [],
       teamContribution: merged.teamContribution ?? "",
       signatureItem: merged.signatureItem ?? "",
+      bible: this.mergeBibleDefaults(merged),
       universeId: merged.universeId,
       seriesId: merged.seriesId,
+    };
+  }
+
+  private mergeBibleDefaults(character: Character): Character["bible"] {
+    const existing = character.bible ?? this.createDefaultBible(character.name);
+    return {
+      ...existing,
+      version: existing.version ?? character.bibleVersion ?? "2.0-foundation",
+      slug: existing.slug ?? character.slug ?? character.name.toLowerCase().replaceAll(" ", "-"),
+      appearanceNotes: existing.appearanceNotes ?? {
+        physicalNotes: character.silhouette || character.visualStyle,
+      },
+      readiness: existing.readiness ?? [],
+      expressions: existing.expressions ?? [],
+      outfits: existing.outfits ?? [],
+      relationships: existing.relationships ?? [],
+      voiceProfile: existing.voiceProfile ?? {
+        status: character.voiceNotes || character.speakingStyle ? "started" : "missing",
+        tone: character.tone,
+        voicePrompt: character.voiceNotes,
+        dialogueExamples: character.catchphrases,
+        continuityNotes: character.continuityNotes,
+      },
+      animationReferences: existing.animationReferences ?? [],
+      props: existing.props ?? [],
+      continuityRules: existing.continuityRules ?? [],
+      notes: existing.notes ?? [],
+    };
+  }
+
+  private createDefaultBible(name: string): Character["bible"] {
+    return {
+      version: "2.0-foundation",
+      slug: name.toLowerCase().replaceAll(" ", "-"),
+      appearanceNotes: {},
+      readiness: [],
+      expressions: [],
+      outfits: [],
+      relationships: [],
+      voiceProfile: { status: "missing" },
+      animationReferences: [],
+      props: [],
+      continuityRules: [],
+      notes: [],
+      grade: "",
+      pronouns: "",
+      biggestDream: "",
     };
   }
 

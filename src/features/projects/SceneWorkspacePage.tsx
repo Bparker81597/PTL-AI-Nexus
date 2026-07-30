@@ -113,6 +113,20 @@ export function SceneWorkspacePage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <ProductionArea title="Story" items={[scene.objective ?? scene.action, scene.dialogue || "Dialogue not set."]} />
             <ProductionArea title="Characters" items={sceneCharacters.map((character) => `${character.name} - ${character.role ?? "Character"}`)} />
+            <Card>
+              <h2 className="font-display text-lg font-semibold">Character Bibles</h2>
+              <div className="mt-3 grid gap-2">
+                {sceneCharacters.map((character) => (
+                  <Link
+                    key={character.id}
+                    to={`/characters/${character.id}`}
+                    className="focus-ring rounded-xl border border-[color:var(--ptl-border-subtle)] bg-white/[0.04] p-3 text-sm text-slate-200 transition hover:border-[color:var(--ptl-border-active)]"
+                  >
+                    {character.name} · {character.role ?? "Character"}
+                  </Link>
+                ))}
+              </div>
+            </Card>
             <ProductionArea title="Location" items={[location?.description ?? scene.location, location?.visualNotes ?? "Location visual notes not set."]} />
             <ProductionArea title="Storyboard" items={[`Status: ${scene.stageProgress?.storyboard ?? "not-started"}`, `${sceneAssets.filter((asset) => asset.type === "storyboard").length} storyboard assets`]} />
             <ProductionArea title="Visual Assets" items={sceneAssets.filter((asset) => asset.type === "generated-image" || asset.type === "character-reference").map((asset) => asset.name)} empty="No visual assets linked." />
