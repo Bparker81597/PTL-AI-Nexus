@@ -19,7 +19,7 @@ The local seed content now centers **PTL Crew**, a PTL Universe Original from Pa
 - **Core cast:** Brooklyn, Maddie, Layla, and Maize.
 - **Active production:** `PTL Crew - Series Foundation`.
 
-Brittany Parker is used at the Parker Tech Labs platform layer as the approved founder and studio-avatar reference for PTL AI Nexus. Brittany is not part of the PTL Crew cast.
+Brittany Parker remains available as the approved public Parker Tech Labs founder reference in the restrained About/profile and Asset Library areas. Brittany is not part of the PTL Crew cast and is not used as the routine product assistant.
 
 ## Mission Control
 

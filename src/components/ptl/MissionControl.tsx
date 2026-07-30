@@ -36,15 +36,15 @@ export function ProjectHero({
     ? ["Brand Identity", "Character Bibles", "Pilot Story", "Visual Development", "Animation Tests", "Voice Development"]
     : project.productionGoals ?? [];
   return (
-    <FeaturePanel className="grid min-w-0 gap-6 p-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(260px,0.95fr)]">
-      <div className="relative z-10 flex min-w-0 flex-col justify-between gap-8">
+    <FeaturePanel className="grid min-w-0 gap-5 p-4 sm:p-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(260px,0.95fr)]">
+      <div className="relative z-10 flex min-w-0 flex-col justify-between gap-6 sm:gap-8">
         <div>
           <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--ptl-cyan-soft)]">
             <StatusDot tone="cyan" pulse />
             Active Project
           </div>
           <p className="mb-2 text-sm font-medium text-[color:var(--ptl-violet-soft)]">{project.brand ?? "A Creative Universe"}</p>
-          <h2 className="break-words font-display text-[30px] font-semibold leading-tight md:text-[38px]">{heroTitle}</h2>
+          <h2 className="break-words font-display text-[26px] font-semibold leading-tight md:text-[38px]">{heroTitle}</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--ptl-text-secondary)] md:text-base">{project.description}</p>
           <p className="mt-4 max-w-xl text-sm font-medium text-white">{project.tagline ?? "One platform. Infinite creativity. Everything connects."}</p>
           <div className="mt-4 grid gap-2 text-sm text-[color:var(--ptl-text-secondary)] sm:grid-cols-2">
@@ -52,11 +52,11 @@ export function ProjectHero({
             <p><strong className="text-white">Current focus:</strong> {currentFocus}</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link to={`/projects/${project.id}`}><PtlButton>Continue Production</PtlButton></Link>
-          <Link to="/characters"><PtlButton variant="secondary">View Characters</PtlButton></Link>
-          <Link to={`/projects/${project.id}`}><PtlButton variant="secondary">Open Project</PtlButton></Link>
-          <Link to={`/projects/${project.id}`}><PtlButton variant="ghost">Create Scene</PtlButton></Link>
+        <div className="grid gap-2 sm:flex sm:flex-wrap">
+          <Link className="min-w-0" to={`/projects/${project.id}`}><PtlButton className="w-full sm:w-auto">Continue Production</PtlButton></Link>
+          <Link className="min-w-0" to="/characters"><PtlButton className="w-full sm:w-auto" variant="secondary">View Characters</PtlButton></Link>
+          <Link className="min-w-0" to={`/projects/${project.id}`}><PtlButton className="w-full sm:w-auto" variant="secondary">Open Project</PtlButton></Link>
+          <Link className="min-w-0" to={`/projects/${project.id}`}><PtlButton className="w-full sm:w-auto" variant="ghost">Create Scene</PtlButton></Link>
         </div>
         <OrbitDivider />
         {progressAreas.length > 0 && (
@@ -66,21 +66,21 @@ export function ProjectHero({
             ))}
           </div>
         )}
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <MetricChip label="Scenes" value={scenes.length} />
           <MetricChip label="Assets" value={assets.filter((asset) => asset.projectId === project.id).length} tone="violet" />
           <MetricChip label="Characters" value={characters.filter((character) => project.characterIds.includes(character.id)).length} />
           <MetricChip label="Progress" value={`${progress}%`} tone="success" />
         </div>
       </div>
-      <div className="relative min-h-[300px] min-w-0 overflow-hidden rounded-[22px] border border-[color:var(--ptl-border-subtle)]">
+      <div className="relative min-h-[240px] min-w-0 overflow-hidden rounded-[22px] border border-[color:var(--ptl-border-subtle)] sm:min-h-[300px]">
         {artwork ? (
-          <MediaPreview src={artwork.url} alt={`${project.name} project artwork`} className="h-full min-h-[300px]" />
+          <MediaPreview src={artwork.url} alt={`${project.name} project artwork`} className="h-full min-h-[240px] sm:min-h-[300px]" />
         ) : (
           <div className="h-full min-h-[300px] bg-[image:var(--ptl-gradient-primary)] opacity-70" />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-[#050b18]/85 via-[#050b18]/22 to-transparent" />
-        <div className="absolute right-6 top-6 rounded-full border border-[color:var(--ptl-border-active)] bg-[#050b18]/45 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--ptl-cyan-soft)] backdrop-blur-md">Nexus Film Desk</div>
+        <div className="absolute right-3 top-3 rounded-full border border-[color:var(--ptl-border-active)] bg-[#050b18]/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--ptl-cyan-soft)] backdrop-blur-md sm:right-6 sm:top-6 sm:text-xs">Nexus Film Desk</div>
         <div className="absolute bottom-4 left-4 right-4">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--ptl-text-secondary)]">Current Phase</p>
           <PtlProgress value={progress} label={`${progress}% episode assembly`} />
@@ -116,7 +116,7 @@ export function SceneTimeline({
         title="Scene sequence"
         action={<Link to={`/projects/${project.id}`}><PtlButton variant="ghost">Open Storyboard</PtlButton></Link>}
       />
-      <div className="overflow-x-auto pb-2">
+      <div className="overflow-x-auto pb-2" aria-label="Scrollable scene timeline">
         <div className="relative flex min-w-max gap-3 before:absolute before:left-8 before:right-8 before:top-[102px] before:h-px before:bg-gradient-to-r before:from-[color:var(--ptl-cyan)]/30 before:via-[color:var(--ptl-violet)]/35 before:to-transparent">
           {ordered.map((scene) => {
             const thumbnail = assets.find((asset) => asset.id === scene.sourceImageAssetId || asset.id === scene.outputVideoAssetId);
@@ -129,7 +129,7 @@ export function SceneTimeline({
                 type="button"
                 onClick={() => onSelect?.(scene)}
                 onDoubleClick={() => navigate(`/projects/${project.id}`)}
-                className={`focus-ring group relative w-[240px] rounded-[18px] border p-3 text-left transition duration-200 hover:-translate-y-1 ${
+                className={`focus-ring group relative w-[78vw] max-w-[260px] rounded-[18px] border p-3 text-left transition duration-200 hover:-translate-y-1 sm:w-[240px] ${
                   selected ? "border-[color:var(--ptl-border-active)] bg-[color:var(--ptl-bg-hover)] shadow-[var(--ptl-glow-cyan)]" : "border-[color:var(--ptl-border-subtle)] bg-white/[0.035]"
                 }`}
               >

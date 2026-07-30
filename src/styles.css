@@ -77,6 +77,16 @@ body::after {
   background: radial-gradient(circle at 50% 0%, rgba(49, 217, 255, 0.08), transparent 44rem);
 }
 
+.mobile-bottom-nav {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-bottom-nav::-webkit-scrollbar {
+  display: none;
+}
+
 button,
 input,
 select,

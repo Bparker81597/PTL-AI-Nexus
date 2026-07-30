@@ -154,7 +154,7 @@ export function DreamFramePage() {
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Camera movement"><input className={inputClass} value={cameraMovement} onChange={(event) => setCameraMovement(event.target.value)} /></Field>
               <Field label="Duration"><select className={inputClass} value={duration} onChange={(event) => setDuration(Number(event.target.value))}><option value={3}>3 seconds</option><option value={5}>5 seconds</option><option value={8}>8 seconds</option><option value={10}>10 seconds</option></select></Field>
               <Field label="Aspect ratio"><select className={inputClass} value={aspectRatio} onChange={(event) => setAspectRatio(event.target.value)}><option>16:9</option><option>9:16</option><option>1:1</option></select></Field>

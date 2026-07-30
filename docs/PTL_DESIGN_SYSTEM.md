@@ -8,7 +8,7 @@ Product identity:
 - Product: PTL AI Nexus
 - Subtitle: A Creative Universe
 - Philosophy: One platform. Infinite creativity. Everything connects.
-- Founder avatar: Brittany Parker, used only for Parker Tech Labs and PTL AI Nexus platform guidance.
+- Founder profile: Brittany Parker, available only in intentional Parker Tech Labs profile, About, and Asset Library contexts.
 - Flagship production: PTL Crew, used as the primary sample project and production content.
 
 ## Theme Tokens
@@ -94,11 +94,11 @@ Use this hierarchy for future content additions:
 
 - Parker Tech Labs is the company layer.
 - PTL AI Nexus is the creative operating system layer.
-- Brittany Parker represents the public founder and studio-avatar layer.
+- Brittany Parker represents the public founder reference layer.
 - PTL Crew is the current flagship production layer.
 - Brooklyn, Maddie, Layla, and Maize are PTL Crew characters.
 
-Brittany should not be added to PTL Crew scenes, cast lists, or character relationships. PTL Crew artwork should remain dominant on production screens, while Brittany appears selectively in welcome, About, guidance, and platform presentation areas.
+Brittany should not be added to PTL Crew scenes, cast lists, or character relationships. PTL Crew artwork should remain dominant on production screens. Brittany should not be used as the assistant, chatbot mascot, loading character, repeated empty-state character, or routine Mission Control host.
 
 ## Responsive Layout
 

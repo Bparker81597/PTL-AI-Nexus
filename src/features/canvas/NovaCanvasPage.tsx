@@ -152,7 +152,7 @@ export function NovaCanvasPage() {
                 {characters.map((character) => <option key={character.id} value={character.id}>{character.name}</option>)}
               </select>
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Style"><select className={inputClass}><option>3D adventure</option><option>Concept art</option><option>Storyboard</option></select></Field>
               <Field label="Aspect ratio"><select className={inputClass} value={aspectRatio} onChange={(event) => setAspectRatio(event.target.value)}><option>16:9</option><option>1:1</option><option>9:16</option></select></Field>
               <Field label="Seed"><input className={inputClass} type="number" defaultValue={2401} /></Field>

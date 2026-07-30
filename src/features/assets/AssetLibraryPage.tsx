@@ -33,7 +33,7 @@ export function AssetLibraryPage() {
           const validLocalFile = asset.url.startsWith("blob:") || asset.url.startsWith("data:");
           return (
             <Card key={asset.id}>
-              {asset.url.startsWith("http") || asset.url.startsWith("data:image") || asset.url.startsWith("blob:") ? (
+              {asset.url.startsWith("http") || asset.url.startsWith("/") || asset.url.startsWith("./") || asset.url.startsWith("data:image") || asset.url.startsWith("blob:") ? (
                 <img src={asset.url} alt={asset.name} className="mb-4 aspect-video rounded-xl object-cover" />
               ) : (
                 <div className="mb-4 grid aspect-video place-items-center rounded-xl bg-white/10 text-sm font-bold">{asset.type}</div>
@@ -51,14 +51,14 @@ export function AssetLibraryPage() {
                   {asset.tags.slice(0, 6).map((tag) => <span key={tag} className="rounded-[10px] bg-white/10 px-2 py-1 text-xs">{tag}</span>)}
                 </div>
               )}
-              <dl className="mt-4 grid gap-2 text-sm text-slate-300">
+              <dl className="mt-4 grid min-w-0 gap-2 text-sm text-slate-300">
                 <div><dt className="font-black text-cyan-100">Project</dt><dd>{project?.name ?? "Unassigned"}</dd></div>
                 <div><dt className="font-black text-cyan-100">Scene</dt><dd>{scene?.title ?? "Unassigned"}</dd></div>
                 <div><dt className="font-black text-cyan-100">Characters</dt><dd>{linkedCharacters.map((character) => character.name).join(", ") || "None"}</dd></div>
                 <div><dt className="font-black text-cyan-100">Provider</dt><dd>{asset.providerId ?? "local"}</dd></div>
                 <div><dt className="font-black text-cyan-100">Created</dt><dd>{new Date(asset.createdAt).toLocaleString()}</dd></div>
                 <div><dt className="font-black text-cyan-100">Dimensions / duration</dt><dd>{asset.dimensions ?? "N/A"} {asset.duration ? `- ${asset.duration}s` : ""}</dd></div>
-                <div><dt className="font-black text-cyan-100">Metadata</dt><dd>{JSON.stringify(asset.metadata ?? {})}</dd></div>
+                <div><dt className="font-black text-cyan-100">Metadata</dt><dd className="break-words">{JSON.stringify(asset.metadata ?? {})}</dd></div>
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="secondary">Open</Button>

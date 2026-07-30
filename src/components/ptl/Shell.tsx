@@ -5,8 +5,6 @@ import { providerStatusItems } from "../../providers/providerStatus";
 import { GlassPanel, IconButton, PtlButton, SectionHeader, StatusBadge, StatusDot } from "./primitives";
 import { ModuleGlyph, NexusLogo, NexusOrb, NexusWordmark, OrbitDivider } from "./brand";
 
-const brittanyReference = `${import.meta.env.BASE_URL}assets/parker-tech-labs/brittany/branding/brittanyverse-character-bible.png`;
-
 const groups = [
   {
     label: "MAIN",
@@ -95,14 +93,17 @@ function Sidebar() {
 }
 
 function MobileNav() {
-  const links = groups.flatMap((group) => group.links).slice(0, 5);
+  const links = groups.flatMap((group) => group.links);
   return (
-    <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-5 rounded-[20px] border border-[color:var(--ptl-border-subtle)] bg-[rgba(5,11,24,0.88)] p-2 backdrop-blur-xl lg:hidden" aria-label="Mobile navigation">
+    <nav className="mobile-bottom-nav fixed inset-x-3 bottom-3 z-40 overflow-x-auto rounded-[20px] border border-[color:var(--ptl-border-subtle)] bg-[rgba(5,11,24,0.9)] p-2 backdrop-blur-xl lg:hidden" aria-label="Mobile navigation">
+      <div className="flex min-w-max gap-1">
       {links.map(([label, href, icon]) => (
-        <NavLink key={href} to={href} end={href === "/"} aria-label={label} className={({ isActive }) => `focus-ring grid min-h-12 place-items-center rounded-[14px] text-xs ${isActive ? "bg-[color:var(--ptl-bg-hover)] text-[color:var(--ptl-cyan)]" : "text-[color:var(--ptl-text-secondary)]"}`}>
+        <NavLink key={href} to={href} end={href === "/"} aria-label={label} className={({ isActive }) => `focus-ring grid min-h-12 w-[72px] place-items-center rounded-[14px] px-1 text-center text-[10px] font-semibold ${isActive ? "bg-[color:var(--ptl-bg-hover)] text-[color:var(--ptl-cyan)]" : "text-[color:var(--ptl-text-secondary)]"}`}>
           <ModuleGlyph module={icon} className="h-5 w-5" />
+          <span className="line-clamp-1">{label.replace("Character ", "").replace("Render ", "")}</span>
         </NavLink>
       ))}
+      </div>
     </nav>
   );
 }
@@ -112,16 +113,16 @@ function Topbar() {
   const jobs = useClusterStore((state) => state.renderJobs);
   const activeJobs = jobs.filter((job) => ["queued", "preparing", "running"].includes(job.status)).length;
   return (
-    <header className="sticky top-0 z-30 border-b border-[color:var(--ptl-border-subtle)] bg-[rgba(5,11,24,0.72)] px-4 py-4 backdrop-blur-xl lg:px-0">
+    <header className="sticky top-0 z-30 border-b border-[color:var(--ptl-border-subtle)] bg-[rgba(5,11,24,0.72)] px-0 py-4 backdrop-blur-xl">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--ptl-cyan-soft)]">PTL AI Nexus</p>
           <h1 className="font-display text-xl font-semibold md:text-2xl">{settings?.currentWorkspace ?? "Parker Tech Labs"}</h1>
           <p className="text-xs text-[color:var(--ptl-text-muted)]">One platform. Infinite creativity. Everything connects.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 sm:flex sm:flex-wrap">
           <label className="sr-only" htmlFor="global-search">Search projects, assets, characters</label>
-          <input id="global-search" className="focus-ring min-h-11 min-w-0 flex-1 rounded-[12px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.055] px-4 text-sm text-white placeholder:text-[color:var(--ptl-text-muted)] sm:w-80" placeholder="Search projects, assets, characters..." />
+          <input id="global-search" className="focus-ring col-span-3 min-h-11 min-w-0 flex-1 rounded-[12px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.055] px-4 text-sm text-white placeholder:text-[color:var(--ptl-text-muted)] sm:col-auto sm:w-80" placeholder="Search projects, assets, characters..." />
           <span className="inline-flex min-h-11 items-center gap-2 rounded-[12px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.04] px-3 text-sm text-[color:var(--ptl-text-secondary)]"><StatusDot tone={activeJobs ? "cyan" : "muted"} pulse={activeJobs > 0} />{activeJobs} active</span>
           <IconButton label="Notifications">
             <NexusLogo className="h-6 w-6" title="Nexus notification center" />
@@ -147,15 +148,8 @@ function RightRail() {
     <aside className="grid gap-4 xl:w-[292px] xl:shrink-0">
       <GlassPanel as="aside">
         <SectionHeader eyebrow="PTL Producer" title="Creative guidance" />
-        <div className="mb-4 flex items-center gap-3 rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-3">
-          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[16px] border border-[color:var(--ptl-border-active)] bg-[#07111f]">
-            <img src={brittanyReference} alt="Brittany Parker founder reference" className="h-full w-full object-cover object-left" loading="lazy" />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#050b18]/50" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-white">Brittany Parker</p>
-            <p className="text-xs leading-5 text-[color:var(--ptl-text-muted)]">Founder host for Parker Tech Labs</p>
-          </div>
+        <div className="mb-4 grid h-20 place-items-center rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035]">
+          <NexusOrb className="h-16 w-16" />
         </div>
         <p className="text-sm leading-6 text-[color:var(--ptl-text-secondary)]">
           {projectScenes.some((scene) => scene.status === "image-ready")
@@ -224,8 +218,8 @@ export function PtlAppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen lg:flex">
       <Sidebar />
-      <div className="min-w-0 flex-1 pb-24 lg:pb-0">
-        <div className="mx-auto grid w-full max-w-[1780px] gap-5 px-4 lg:px-6 xl:grid-cols-[minmax(0,1fr)_292px]">
+      <div className="min-w-0 flex-1 pb-32 lg:pb-0">
+        <div className="mx-auto grid w-full max-w-[1780px] gap-5 px-3 sm:px-4 lg:px-6 xl:grid-cols-[minmax(0,1fr)_292px]">
           <div className="min-w-0 overflow-x-hidden">
             <Topbar />
             <main className="ptl-fade-in min-w-0 overflow-x-hidden py-5">{children}</main>
@@ -260,23 +254,15 @@ function NexusOnboarding({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-[#050b18]/78 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="nexus-welcome-title">
-      <GlassPanel className="max-w-2xl border-[color:var(--ptl-border-active)] p-6 shadow-[var(--ptl-glow-cyan)]">
+      <GlassPanel className="w-[calc(100vw-2rem)] max-w-2xl min-w-0 border-[color:var(--ptl-border-active)] p-4 shadow-[var(--ptl-glow-cyan)] sm:p-6">
         <div className="flex flex-col gap-5 md:flex-row md:items-center">
-          <div className="relative grid shrink-0 place-items-center">
-            <NexusLogo className="h-24 w-24" />
-            <img
-              src={brittanyReference}
-              alt="Brittany Parker, founder of Parker Tech Labs"
-              className="absolute -right-5 bottom-0 h-20 w-20 rounded-[18px] border border-[color:var(--ptl-border-active)] object-cover object-left shadow-[var(--ptl-glow-cyan)]"
-              loading="lazy"
-            />
-          </div>
-          <div>
+          <NexusLogo className="h-24 w-24 shrink-0" />
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--ptl-cyan-soft)]">Parker Tech Labs</p>
             <h2 id="nexus-welcome-title" className="mt-2 font-display text-3xl font-semibold">PTL AI Nexus</h2>
             <p className="mt-1 text-lg text-[color:var(--ptl-text-secondary)]">A Creative Universe</p>
-            <p className="mt-4 text-sm leading-6 text-[color:var(--ptl-text-secondary)]">
-              Welcome to PTL AI Nexus. I&apos;m Brittany, founder of Parker Tech Labs. Let&apos;s bring your next world to life.
+            <p className="mt-4 break-words text-sm leading-6 text-[color:var(--ptl-text-secondary)]">
+              A professional creative production workspace for connected characters, scenes, assets, and AI-assisted workflows.
             </p>
           </div>
         </div>
@@ -289,9 +275,9 @@ function NexusOnboarding({ onClose }: { onClose: () => void }) {
             </div>
           ))}
         </div>
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
           <p className="text-xs text-[color:var(--ptl-text-muted)]">Built by Parker Tech Labs</p>
-          <PtlButton type="button" onClick={onClose}>Enter Nexus</PtlButton>
+          <PtlButton className="w-full sm:w-auto" type="button" onClick={onClose}>Enter Nexus</PtlButton>
         </div>
       </GlassPanel>
     </div>
