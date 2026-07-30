@@ -33,25 +33,72 @@ export interface Asset {
   duration?: number;
   isMock: boolean;
   metadata?: Record<string, unknown>;
+  category?: string;
+  tags?: string[];
+  universeId?: string;
+  seriesId?: string;
 }
 
 export interface Character {
   id: string;
   name: string;
+  nickname?: string;
+  role?: string;
+  age?: string;
+  species?: string;
+  occupation?: string;
+  status?: string;
   description: string;
   ageRange?: string;
   visualStyle: string;
+  heroImage?: string;
+  gallery?: string[];
+  portrait?: string;
   referenceImages: Asset[];
   defaultOutfit?: string;
   expressions: string[];
   outfits: string[];
+  accessories?: string[];
+  colorPalette?: string[];
+  silhouette?: string;
   colors: string[];
+  biography?: string;
+  personality?: string;
+  strengths?: string[];
+  weaknesses?: string[];
+  fears?: string[];
+  motivations?: string[];
+  goals?: string[];
+  family?: string[];
+  friends?: string[];
+  rivals?: string[];
+  mentors?: string[];
+  speakingStyle?: string;
+  catchphrases?: string[];
+  tone?: string;
+  narrationStyle?: string;
+  defaultPrompt?: string;
   consistencyPrompt: string;
   negativePrompt?: string;
+  animationNotes?: string;
+  voiceNotes?: string;
+  continuityNotes?: string;
   loraName?: string;
   loraStrength?: number;
+  projects?: string[];
+  scenes?: string[];
+  assetCount?: number;
+  lastUsed?: string;
   createdAt: string;
   updatedAt: string;
+  created?: string;
+  updated?: string;
+  tags?: string[];
+  interests?: string[];
+  teamContribution?: string;
+  signatureItem?: string;
+  universeId?: string;
+  seriesId?: string;
 }
 
 export interface Project {
@@ -65,6 +112,11 @@ export interface Project {
   sceneIds: string[];
   createdAt: string;
   updatedAt: string;
+  brand?: string;
+  tagline?: string;
+  productionGoals?: string[];
+  universeId?: string;
+  seriesId?: string;
 }
 
 export interface Scene {
@@ -90,6 +142,10 @@ export interface Scene {
   status: "draft" | "image-ready" | "rendering" | "completed";
   createdAt: string;
   updatedAt: string;
+  purpose?: string;
+  objective?: string;
+  universeId?: string;
+  seriesId?: string;
 }
 
 export interface Storyboard {

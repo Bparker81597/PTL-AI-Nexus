@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { NexusOrb, OrbitDivider } from "./brand";
 
 type Tone = "cyan" | "violet" | "success" | "warning" | "danger" | "muted";
 
@@ -14,7 +15,7 @@ const toneClasses: Record<Tone, string> = {
 export function GlassPanel({ children, className = "", as = "section" }: { children: ReactNode; className?: string; as?: "section" | "div" | "article" | "aside" }) {
   const Component = as;
   return (
-    <Component className={`rounded-[20px] border border-[color:var(--ptl-border-subtle)] bg-[color:var(--ptl-bg-panel)] p-5 backdrop-blur-xl ${className}`}>
+    <Component className={`rounded-[20px] border border-[color:var(--ptl-border-subtle)] bg-[color:var(--ptl-bg-panel)] p-5 backdrop-blur-xl transition duration-200 ${className}`}>
       {children}
     </Component>
   );
@@ -22,7 +23,7 @@ export function GlassPanel({ children, className = "", as = "section" }: { child
 
 export function FeaturePanel({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <section className={`relative overflow-hidden rounded-[24px] border border-[color:var(--ptl-border-default)] bg-[image:var(--ptl-gradient-panel)] p-5 shadow-[var(--ptl-glow-cyan)] ${className}`}>
+    <section className={`relative overflow-hidden rounded-[24px] border border-[color:var(--ptl-border-default)] bg-[image:var(--ptl-gradient-panel)] p-5 shadow-[var(--ptl-glow-cyan)] transition duration-200 ${className}`}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[color:var(--ptl-cyan)] to-transparent opacity-70" />
       {children}
     </section>
@@ -62,10 +63,10 @@ export function PtlButton({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "ghost" | "danger"; loading?: boolean }) {
   const variants = {
-    primary: "border-transparent bg-[image:var(--ptl-gradient-primary)] text-[#03101b] shadow-[var(--ptl-glow-cyan)] hover:brightness-110",
-    secondary: "border-[color:var(--ptl-border-violet)] bg-violet-400/10 text-white hover:bg-violet-300/15",
+    primary: "border-transparent bg-[image:var(--ptl-gradient-primary)] text-[#03101b] shadow-[var(--ptl-glow-cyan)] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0",
+    secondary: "border-[color:var(--ptl-border-violet)] bg-violet-400/10 text-white hover:-translate-y-0.5 hover:bg-violet-300/15 active:translate-y-0",
     ghost: "border-transparent bg-transparent text-[color:var(--ptl-text-secondary)] hover:bg-[color:var(--ptl-bg-hover)] hover:text-white",
-    danger: "border-rose-300/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/18",
+    danger: "border-rose-300/30 bg-rose-400/12 text-rose-100 hover:-translate-y-0.5 hover:bg-rose-400/18 active:translate-y-0",
   };
   return (
     <button
@@ -167,6 +168,9 @@ export function EmptyState({ title, message, action }: { title: string; message:
   return (
     <GlassPanel className="grid min-h-40 place-items-center text-center">
       <div>
+        <div className="mx-auto mb-4 h-12 w-20">
+          <OrbitDivider />
+        </div>
         <h3 className="font-display text-lg font-semibold">{title}</h3>
         <p className="mt-2 max-w-md text-sm text-[color:var(--ptl-text-secondary)]">{message}</p>
         {action && <div className="mt-4">{action}</div>}
@@ -177,10 +181,9 @@ export function EmptyState({ title, message, action }: { title: string; message:
 
 export function LoadingState({ label = "Loading PTL workspace..." }: { label?: string }) {
   return (
-    <GlassPanel className="flex min-h-40 items-center justify-center gap-3">
-      <StatusDot tone="cyan" pulse />
+    <GlassPanel className="flex min-h-40 items-center justify-center gap-4">
+      <NexusOrb className="h-12 w-12" />
       <span className="text-sm text-[color:var(--ptl-text-secondary)]">{label}</span>
     </GlassPanel>
   );
 }
-

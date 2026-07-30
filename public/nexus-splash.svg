@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="PTL AI Nexus splash screen">
+  <defs>
+    <radialGradient id="a" cx="35%" cy="20%" r="60%">
+      <stop stop-color="#31D9FF" stop-opacity=".2" />
+      <stop offset="1" stop-color="#050B18" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="b" cx="76%" cy="18%" r="58%">
+      <stop stop-color="#8B5CFF" stop-opacity=".18" />
+      <stop offset="1" stop-color="#050B18" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="g" x1="390" x2="570" y1="164" y2="346">
+      <stop stop-color="#31D9FF" />
+      <stop offset=".52" stop-color="#188DD7" />
+      <stop offset="1" stop-color="#8B5CFF" />
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="#050B18" />
+  <rect width="960" height="540" fill="url(#a)" />
+  <rect width="960" height="540" fill="url(#b)" />
+  <circle cx="480" cy="245" r="94" fill="none" stroke="url(#g)" stroke-width="10" opacity=".5" />
+  <path d="M430 296V194h28l49 60v-60h27v102h-28l-49-61v61h-27Z" fill="url(#g)" />
+  <path d="M555 154l7 16 16 7-16 7-7 16-7-16-16-7 16-7 7-16Z" fill="#F7FAFC" />
+  <text x="480" y="384" text-anchor="middle" font-family="Space Grotesk, Inter, system-ui" font-size="36" font-weight="600" fill="#F7FAFC">PTL AI NEXUS</text>
+  <text x="480" y="418" text-anchor="middle" font-family="Inter, system-ui" font-size="18" fill="#B8C7DC">A Creative Universe</text>
+</svg>

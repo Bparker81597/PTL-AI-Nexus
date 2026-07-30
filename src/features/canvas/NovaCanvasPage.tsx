@@ -27,10 +27,20 @@ export function NovaCanvasPage() {
   const selectedCharacters = characters.filter((character) => selectedCharacterIds.includes(character.id));
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
   const selectedProjectScenes = scenes.filter((scene) => scene.projectId === selectedProjectId);
-  const consistencyText = selectedCharacters.map((character) => character.consistencyPrompt).join("\n");
+  const consistencyText = selectedCharacters
+    .map((character) =>
+      [
+        character.defaultPrompt ?? character.consistencyPrompt,
+        character.personality ? `Personality: ${character.personality}` : "",
+        character.continuityNotes ? `Continuity: ${character.continuityNotes}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    )
+    .join("\n\n");
   const [prompt, setPrompt] = useState(
     routeState.prompt ??
-      `${selectedScene?.title ?? "Eric and Maize reveal a glowing monster truck in a futuristic workshop"}. ${consistencyText}`,
+      `${selectedScene?.title ?? "PTL Crew character lineup for the pilot episode"}. ${consistencyText}`,
   );
   const [negativePrompt, setNegativePrompt] = useState(
     selectedCharacters.map((character) => character.negativePrompt).filter(Boolean).join(", ") ||
@@ -50,6 +60,12 @@ export function NovaCanvasPage() {
     const timer = window.setInterval(() => void refreshAll(), 350);
     return () => window.clearInterval(timer);
   }, [lastJobId, refreshAll]);
+
+  useEffect(() => {
+    if (!selectedScene) return;
+    setSelectedCharacterIds(selectedScene.characterIds);
+    setAspectRatio(selectedScene.aspectRatio);
+  }, [selectedScene]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -110,6 +126,18 @@ export function NovaCanvasPage() {
             <Field label="Relevant consistency prompts">
               <textarea className={textareaClass} value={consistencyText} readOnly aria-label="Relevant consistency prompts" />
             </Field>
+            <div className="rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Character Bible context</p>
+              <div className="mt-3 grid gap-3">
+                {selectedCharacters.map((character) => (
+                  <div key={character.id} className="rounded-xl bg-white/7 p-3">
+                    <strong>{character.name}</strong>
+                    <p className="mt-1 text-xs text-slate-300">{character.role ?? "Character"} · {character.defaultOutfit ?? "Default outfit"}</p>
+                    <p className="mt-2 text-xs leading-5 text-slate-300">{character.defaultPrompt ?? character.consistencyPrompt}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
             <Field label="Negative prompt">
               <textarea className={textareaClass} value={negativePrompt} onChange={(event) => setNegativePrompt(event.target.value)} />
             </Field>

@@ -3,6 +3,7 @@ import { afterEach, vi } from "vitest";
 
 beforeEach(() => {
   window.localStorage.clear();
+  window.localStorage.setItem("ptl.nexus.onboarding.seen", "true");
 });
 
 afterEach(() => {

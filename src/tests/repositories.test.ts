@@ -40,9 +40,9 @@ describe("local repositories", () => {
       projectId: "project-monster-truck",
       title: "Test Scene",
       description: "A local workflow test scene.",
-      characterIds: ["char-eric"],
+      characterIds: ["char-brooklyn"],
     });
-    const firstScene = (await repository.list()).find((item) => item.id === "scene-stadium-arrival");
+    const firstScene = (await repository.list()).find((item) => item.id === scene.id);
     expect(scene.title).toBe("Test Scene");
     expect(firstScene).toBeDefined();
 
@@ -55,13 +55,23 @@ describe("local repositories", () => {
 
   it("persists character edits after repository refresh", async () => {
     const repository = new LocalCharacterRepository();
-    const eric = await repository.getById("char-eric");
-    expect(eric).toBeDefined();
-    if (!eric) return;
+    const brooklyn = await repository.getById("char-brooklyn");
+    expect(brooklyn).toBeDefined();
+    if (!brooklyn) return;
 
-    await repository.update({ ...eric, description: "Persisted Eric edit" });
-    const refreshed = await new LocalCharacterRepository().getById("char-eric");
+    await repository.update({ ...brooklyn, description: "Persisted Brooklyn edit" });
+    const refreshed = await new LocalCharacterRepository().getById("char-brooklyn");
 
-    expect(refreshed?.description).toBe("Persisted Eric edit");
+    expect(refreshed?.description).toBe("Persisted Brooklyn edit");
+  });
+
+  it("hydrates Character Bible fields for existing characters", async () => {
+    const repository = new LocalCharacterRepository();
+    const brooklyn = await repository.getById("char-brooklyn");
+
+    expect(brooklyn?.role).toBe("The Creator");
+    expect(brooklyn?.biography).toContain("PTL Crew");
+    expect(brooklyn?.speakingStyle).toContain("imaginative");
+    expect(brooklyn?.projects).toContain("project-monster-truck");
   });
 });

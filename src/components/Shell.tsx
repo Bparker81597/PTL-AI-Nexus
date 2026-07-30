@@ -29,7 +29,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-300 text-lg font-black text-navy-950">P</div>
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-cyan-200">Parker Tech Labs</p>
-            <h1 className="text-xl font-black">PTL AI Cluster</h1>
+            <h1 className="text-xl font-black">PTL AI Nexus</h1>
           </div>
         </div>
         <nav className="flex gap-2 overflow-x-auto px-3 pb-4 lg:block lg:space-y-1 lg:overflow-visible" aria-label="Primary">

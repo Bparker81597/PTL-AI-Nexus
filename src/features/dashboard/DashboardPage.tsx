@@ -6,6 +6,7 @@ import {
   GlassPanel,
   LoadingState,
   ModuleCard,
+  OrbitDivider,
   ProjectHero,
   PtlButton,
   SceneTimeline,
@@ -46,6 +47,7 @@ export function DashboardPage() {
         scenes={projectScenes}
         assets={assets}
         jobs={renderJobs}
+        characters={characters}
         selectedSceneId={selectedScene?.id}
         onSelect={(scene) => setSelectedSceneId(scene.id)}
       />
@@ -70,26 +72,51 @@ export function DashboardPage() {
       <section>
         <SectionHeader eyebrow="Creative Modules" title="Production tools" />
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-          <ModuleCard title="Character Studio" description="Manage Eric, Maize, outfits, expressions, and consistency prompts." summary={`${characters.length} characters`} href="/characters" tone="violet">
+          <ModuleCard title="Character Studio" description="Manage Brooklyn, Maddie, Layla, Maize, outfits, expressions, and consistency prompts." summary={`${characters.length} characters`} href="/characters" tone="violet" icon="characters">
             <div className="flex -space-x-2">{characters.slice(0, 4).map((character) => <span key={character.id} className="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-violet-300/20 text-xs font-semibold">{character.name.slice(0, 1)}</span>)}</div>
           </ModuleCard>
-          <ModuleCard title="NovaCanvas" description="Generate project and scene-linked concept images." summary={`${imageAssets.length} image assets`} href="/canvas" tone="cyan">
+          <ModuleCard title="NovaCanvas" description="Generate project and scene-linked concept images." summary={`${imageAssets.length} image assets`} href="/canvas" tone="cyan" icon="canvas">
             <MiniPreview count={imageAssets.length} />
           </ModuleCard>
-          <ModuleCard title="DreamFrame" description="Animate scene source images into simulated clips." summary={`${videoAssets.length} clip assets`} href="/dreamframe" tone="blue">
+          <ModuleCard title="DreamFrame" description="Animate scene source images into simulated clips." summary={`${videoAssets.length} clip assets`} href="/dreamframe" tone="blue" icon="dreamframe">
             <MiniPreview count={videoAssets.length} />
           </ModuleCard>
-          <ModuleCard title="NovaTone" description="Create dialogue, music cues, and production audio." summary={`${audioAssets.length} audio assets`} href="/novatone" tone="magenta">
+          <ModuleCard title="NovaTone" description="Create dialogue, music cues, and production audio." summary={`${audioAssets.length} audio assets`} href="/novatone" tone="magenta" icon="novatone">
             <Waveform />
           </ModuleCard>
-          <ModuleCard title="Render Queue" description="Track generation jobs from queued to complete." summary={`${activeJobs.length} active jobs`} href="/render-queue" tone="blue">
+          <ModuleCard title="Render Queue" description="Track generation jobs from queued to complete." summary={`${activeJobs.length} active jobs`} href="/render-queue" tone="blue" icon="queue">
             <div className="flex items-center gap-2"><StatusBadge status={activeJobs.length ? "Rendering" : "Ready"} /><span className="text-sm text-[color:var(--ptl-text-secondary)]">{renderJobs.length} total</span></div>
           </ModuleCard>
-          <ModuleCard title="Asset Library" description="Browse all generated images, clips, references, and audio." summary={`${assets.length} total assets`} href="/assets" tone="cyan">
+          <ModuleCard title="Asset Library" description="Browse all generated images, clips, references, and audio." summary={`${assets.length} total assets`} href="/assets" tone="cyan" icon="assets">
             <MiniPreview count={assets.length} />
           </ModuleCard>
         </div>
       </section>
+
+      <GlassPanel>
+        <SectionHeader eyebrow="Nexus Ecosystem" title="Brand hierarchy" />
+        <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr_1fr]">
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--ptl-text-muted)]">Parent company</p>
+            <p className="mt-2 font-display text-xl font-semibold">Parker Tech Labs</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--ptl-text-muted)]">Creative operating system</p>
+            <p className="mt-2 font-display text-xl font-semibold">PTL AI Nexus</p>
+            <p className="text-sm text-[color:var(--ptl-text-secondary)]">A Creative Universe</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--ptl-text-muted)]">Future modules</p>
+            <p className="mt-2 text-sm text-[color:var(--ptl-text-secondary)]">CodeVerse and NovaKart have reserved identity slots for the broader Parker Tech Labs ecosystem.</p>
+          </div>
+        </div>
+        <OrbitDivider className="my-5" />
+        <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--ptl-text-secondary)]">
+          {["Character Studio", "NovaCanvas", "DreamFrame", "NovaTone", "CodeVerse", "NovaKart", "Projects", "Timeline", "Scenes", "Assets", "AI Engines"].map((item) => (
+            <span key={item} className="rounded-[10px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] px-3 py-2">{item}</span>
+          ))}
+        </div>
+      </GlassPanel>
 
       <GlassPanel>
         <SectionHeader eyebrow="Production Health" title="Repository-driven metrics" />

@@ -1,6 +1,15 @@
 # PTL Design System v2
 
-PTL Design System v2 defines the Mission Control visual language for PTL AI Cluster. It should be used for every new route, module, panel, workflow, and future Parker Tech Labs production tool.
+PTL Design System v2 defines the Mission Control visual language for PTL AI Nexus. It should be used for every new route, module, panel, workflow, and future Parker Tech Labs production tool.
+
+Product identity:
+
+- Parent company: Parker Tech Labs
+- Product: PTL AI Nexus
+- Subtitle: A Creative Universe
+- Philosophy: One platform. Infinite creativity. Everything connects.
+- Founder avatar: Brittany Parker, used only for Parker Tech Labs and PTL AI Nexus platform guidance.
+- Flagship production: PTL Crew, used as the primary sample project and production content.
 
 ## Theme Tokens
 
@@ -78,6 +87,18 @@ Never rely on color alone. Always include readable status text.
 - AI Engines: cyan-violet.
 
 These are accents, not separate page themes.
+
+## Content Hierarchy
+
+Use this hierarchy for future content additions:
+
+- Parker Tech Labs is the company layer.
+- PTL AI Nexus is the creative operating system layer.
+- Brittany Parker represents the public founder and studio-avatar layer.
+- PTL Crew is the current flagship production layer.
+- Brooklyn, Maddie, Layla, and Maize are PTL Crew characters.
+
+Brittany should not be added to PTL Crew scenes, cast lists, or character relationships. PTL Crew artwork should remain dominant on production screens, while Brittany appears selectively in welcome, About, guidance, and platform presentation areas.
 
 ## Responsive Layout
 

@@ -3,11 +3,24 @@ import { useClusterStore } from "../../app/useClusterStore";
 import { Button, Card, Field, PageHeader, inputClass, textareaClass } from "../../components/Ui";
 
 export function NovaTonePage() {
-  const { assets, projects, generate } = useClusterStore();
-  const [dialogue, setDialogue] = useState("Eric: Let's build the biggest jump Parker Tech Labs has ever seen!");
+  const { assets, projects, characters, generate } = useClusterStore();
+  const [selectedCharacterId, setSelectedCharacterId] = useState(characters[0]?.id ?? "");
+  const selectedCharacter = characters.find((character) => character.id === selectedCharacterId);
+  const [dialogue, setDialogue] = useState("Brooklyn: I have an idea!");
 
   const submit = async (generationType: "voice" | "music" | "sound-effect") => {
-    await generate({ projectId: projects[0]?.id, generationType, prompt: dialogue, settings: { duration: 12, voice: "Bright kid hero" } });
+    await generate({
+      projectId: projects[0]?.id,
+      generationType,
+      prompt: dialogue,
+      characterIds: selectedCharacter ? [selectedCharacter.id] : undefined,
+      settings: {
+        duration: 12,
+        voice: selectedCharacter?.tone ?? "Bright kid hero",
+        speakingStyle: selectedCharacter?.speakingStyle,
+        voiceNotes: selectedCharacter?.voiceNotes,
+      },
+    });
   };
 
   return (
@@ -16,7 +29,21 @@ export function NovaTonePage() {
       <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
         <Card>
           <form className="grid gap-4" onSubmit={(event: FormEvent) => event.preventDefault()}>
-            <Field label="Voice selector"><select className={inputClass}><option>Eric bright</option><option>Maize confident</option><option>Narrator warm</option></select></Field>
+            <Field label="Voice selector">
+              <select className={inputClass} value={selectedCharacterId} onChange={(event) => setSelectedCharacterId(event.target.value)} aria-label="Voice selector">
+                {characters.map((character) => <option key={character.id} value={character.id}>{character.name} - {character.tone ?? character.role ?? "Voice profile"}</option>)}
+              </select>
+            </Field>
+            {selectedCharacter && (
+              <div className="rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Character voice profile</p>
+                <h3 className="mt-2 font-display text-lg font-semibold">{selectedCharacter.name}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{selectedCharacter.speakingStyle || selectedCharacter.voiceNotes || "Voice profile not set."}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(selectedCharacter.catchphrases ?? []).map((phrase) => <span key={phrase} className="rounded-[10px] bg-white/10 px-3 py-2 text-xs font-bold">{phrase}</span>)}
+                </div>
+              </div>
+            )}
             <Field label="Dialogue input"><textarea className={textareaClass} value={dialogue} onChange={(e) => setDialogue(e.target.value)} /></Field>
             <Field label="Background-music prompt"><input className={inputClass} defaultValue="Upbeat futuristic adventure theme" /></Field>
             <Field label="Sound-effect prompt"><input className={inputClass} defaultValue="Monster truck engine sparkle boost" /></Field>

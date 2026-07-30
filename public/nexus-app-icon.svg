@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PTL AI Nexus app icon">
+  <defs>
+    <linearGradient id="g" x1="110" x2="410" y1="90" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#31D9FF" />
+      <stop offset=".52" stop-color="#188DD7" />
+      <stop offset="1" stop-color="#8B5CFF" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#050B18" />
+  <circle cx="256" cy="256" r="188" fill="none" stroke="url(#g)" stroke-width="22" opacity=".5" />
+  <path d="M150 360V152h58l100 123V152h54v208h-58L204 236v124h-54Z" fill="url(#g)" />
+  <path d="M382 78l15 35 35 15-35 15-15 35-15-35-35-15 35-15 15-35Z" fill="#F7FAFC" />
+</svg>

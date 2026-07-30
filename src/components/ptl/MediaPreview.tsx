@@ -27,7 +27,13 @@ export function MediaPreview({
     );
   }
 
-  if (src.startsWith("http") || src.startsWith("data:image") || src.startsWith("blob:")) {
+  if (
+    src.startsWith("http") ||
+    src.startsWith("/") ||
+    src.startsWith("./") ||
+    src.startsWith("data:image") ||
+    src.startsWith("blob:")
+  ) {
     return <img loading="lazy" src={src} alt={alt} className={`w-full rounded-[18px] object-cover ${className}`} />;
   }
 
@@ -37,4 +43,3 @@ export function MediaPreview({
     </div>
   );
 }
-

@@ -31,6 +31,7 @@
   --ptl-glow-violet: 0 0 24px rgba(139, 92, 255, 0.16);
   --ptl-glow-success: 0 0 16px rgba(49, 211, 138, 0.18);
   --ptl-gradient-primary: linear-gradient(135deg, #31d9ff 0%, #188dd7 52%, #8b5cff 100%);
+  --ptl-gradient-nexus: conic-gradient(from 160deg, #31d9ff 0deg, #188dd7 128deg, #8b5cff 252deg, #31d9ff 360deg);
   --ptl-gradient-panel: linear-gradient(
     145deg,
     rgba(24, 48, 81, 0.78) 0%,
@@ -110,6 +111,10 @@ textarea {
     animation: ptl-fade-in 220ms ease-out both;
   }
 
+  .nexus-orbit {
+    animation: nexus-orbit 8s linear infinite;
+  }
+
   @keyframes ptl-fade-in {
     from {
       opacity: 0;
@@ -118,6 +123,15 @@ textarea {
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes nexus-orbit {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
     }
   }
 }

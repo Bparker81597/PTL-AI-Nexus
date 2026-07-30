@@ -77,7 +77,7 @@ export function ProjectDetailPage() {
     await createScene({
       projectId: project.id,
       title: newSceneTitle,
-      description: "New Monster Truck Adventure storyboard scene.",
+      description: "New PTL Crew pilot storyboard scene.",
       characterIds: project.characterIds,
     });
     setNewSceneTitle("");
@@ -129,8 +129,13 @@ export function ProjectDetailPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {characters.map((character) => (
             <Card key={character.id}>
-              <h3 className="text-xl font-black">{character.name}</h3>
-              <p className="mt-2 text-sm text-slate-300">{character.description}</p>
+              <img src={character.portrait || character.heroImage || character.referenceImages[0]?.url} alt={`${character.name} portrait`} className="mb-4 aspect-[5/3] rounded-xl object-cover" />
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">{character.role ?? "Character"}</p>
+              <h3 className="mt-1 text-xl font-black">{character.name}</h3>
+              <p className="mt-2 text-sm text-slate-300">{character.personality || character.description}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(character.tags ?? []).slice(0, 3).map((tag) => <span key={tag} className="rounded-[10px] bg-white/10 px-2 py-1 text-xs">{tag}</span>)}
+              </div>
               <div className="mt-4 flex gap-2">
                 <Link to={`/characters/${character.id}`}><Button variant="secondary">Open</Button></Link>
                 <Button onClick={() => void addCharacterToProject(project.id, character.id)}>
@@ -165,7 +170,9 @@ export function ProjectDetailPage() {
                   <StatusBadge status={scene.status} />
                 </div>
                 <div className="mt-4 grid gap-2 text-sm text-slate-300 md:grid-cols-2">
+                  <p><strong className="text-white">Characters:</strong> {characters.filter((character) => scene.characterIds.includes(character.id)).map((character) => character.name).join(", ") || "None"}</p>
                   <p><strong className="text-white">Location:</strong> {scene.location}</p>
+                  <p><strong className="text-white">Objective:</strong> {scene.action}</p>
                   <p><strong className="text-white">Emotion:</strong> {scene.emotion}</p>
                   <p><strong className="text-white">Camera:</strong> {scene.cameraMovement}</p>
                   <p><strong className="text-white">Duration:</strong> {scene.duration}s</p>

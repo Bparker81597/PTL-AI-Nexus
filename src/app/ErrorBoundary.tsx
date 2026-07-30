@@ -18,7 +18,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("PTL AI Cluster route failed", error, info.componentStack);
+    console.error("PTL AI Nexus route failed", error, info.componentStack);
   }
 
   reset = () => {

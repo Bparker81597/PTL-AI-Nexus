@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="PTL AI Nexus">
+  <defs>
+    <linearGradient id="g" x1="20" x2="78" y1="18" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#31D9FF" />
+      <stop offset=".52" stop-color="#188DD7" />
+      <stop offset="1" stop-color="#8B5CFF" />
+    </linearGradient>
+    <filter id="glow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="2.8" result="blur" />
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.19 0 0 0 0 0.85 0 0 0 0 1 0 0 0 .5 0" />
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <circle cx="48" cy="48" r="35" fill="none" stroke="url(#g)" stroke-width="4.4" opacity=".48" />
+  <path d="M24 48c13-19 35-24 54-18" fill="none" stroke="url(#g)" stroke-linecap="round" stroke-width="3" opacity=".42" />
+  <path d="M28 68V28h10.8l19.4 23.8V28H70v40H59.2L39.8 44.2V68H28Z" fill="url(#g)" filter="url(#glow)" />
+  <path d="M73 16l2.4 5.6L81 24l-5.6 2.4L73 32l-2.4-5.6L65 24l5.6-2.4L73 16Z" fill="#F7FAFC" />
+</svg>

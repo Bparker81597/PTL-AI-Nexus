@@ -26,10 +26,11 @@ export function DreamFramePage() {
   );
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
   const sourceAsset = assets.find((asset) => asset.id === sourceAssetId);
+  const selectedCharacters = characters.filter((character) => selectedCharacterIds.includes(character.id));
   const projectScenes = scenes.filter((scene) => scene.projectId === selectedProjectId);
   const sourceImages = assets.filter((asset) => asset.projectId === selectedProjectId && asset.type === "generated-image");
   const [motionPrompt, setMotionPrompt] = useState(routeState.motionPrompt ?? selectedScene?.motionPrompt ?? "Camera tracks the monster truck as it jumps through teal energy rings");
-  const [actionPrompt, setActionPrompt] = useState(selectedScene?.action ?? "Eric and Maize cheer with consistent animated character motion.");
+  const [actionPrompt, setActionPrompt] = useState(selectedScene?.action ?? "The PTL Crew moves with expressive, consistent animated character motion.");
   const [cameraMovement, setCameraMovement] = useState(selectedScene?.cameraMovement ?? "Tracking shot");
   const [duration, setDuration] = useState<number>(selectedScene?.duration ?? 5);
   const [aspectRatio, setAspectRatio] = useState(routeState.aspectRatio ?? selectedScene?.aspectRatio ?? "16:9");
@@ -56,7 +57,15 @@ export function DreamFramePage() {
   useEffect(() => {
     if (!selectedScene) return;
     setMotionPrompt(selectedScene.motionPrompt);
-    setActionPrompt(selectedScene.action);
+    setActionPrompt(
+      [
+        selectedScene.action,
+        ...characters
+          .filter((character) => selectedScene.characterIds.includes(character.id))
+          .map((character) => character.animationNotes)
+          .filter(Boolean),
+      ].join("\n"),
+    );
     setCameraMovement(selectedScene.cameraMovement);
     setDuration(selectedScene.duration);
     setAspectRatio(selectedScene.aspectRatio);
@@ -65,7 +74,7 @@ export function DreamFramePage() {
     setMotionStrength(selectedScene.motionStrength);
     if (selectedScene.sourceImageAssetId) setSourceAssetId(selectedScene.sourceImageAssetId);
     setSelectedCharacterIds(selectedScene.characterIds);
-  }, [selectedScene]);
+  }, [characters, selectedScene]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -133,6 +142,18 @@ export function DreamFramePage() {
             </Field>
             <Field label="Motion prompt"><textarea className={textareaClass} value={motionPrompt} onChange={(event) => setMotionPrompt(event.target.value)} /></Field>
             <Field label="Character-action prompt"><textarea className={textareaClass} value={actionPrompt} onChange={(event) => setActionPrompt(event.target.value)} /></Field>
+            <div className="rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Animation profiles</p>
+              <div className="mt-3 grid gap-3">
+                {selectedCharacters.map((character) => (
+                  <div key={character.id} className="rounded-xl bg-white/7 p-3">
+                    <strong>{character.name}</strong>
+                    <p className="mt-1 text-xs text-slate-300">{character.role ?? "Character"} · {character.tone ?? "Voice tone not set"}</p>
+                    <p className="mt-2 text-xs leading-5 text-slate-300">{character.animationNotes || character.continuityNotes || character.consistencyPrompt}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Camera movement"><input className={inputClass} value={cameraMovement} onChange={(event) => setCameraMovement(event.target.value)} /></Field>
               <Field label="Duration"><select className={inputClass} value={duration} onChange={(event) => setDuration(Number(event.target.value))}><option value={3}>3 seconds</option><option value={5}>5 seconds</option><option value={8}>8 seconds</option><option value={10}>10 seconds</option></select></Field>

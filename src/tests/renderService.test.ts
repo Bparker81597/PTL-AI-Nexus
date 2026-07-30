@@ -28,8 +28,8 @@ describe("RenderService", () => {
       projectId: "project-monster-truck",
       generationType: "image",
       prompt: "Generate a test concept",
-      characterIds: ["char-eric", "char-maize"],
-      settings: { sceneId: "scene-entrance" },
+      characterIds: ["char-brooklyn", "char-maddie"],
+      settings: { sceneId: "scene-wonder-question" },
       preferredProvider: "mock",
     });
 
@@ -50,14 +50,14 @@ describe("RenderService", () => {
       projectId: "project-monster-truck",
       generationType: "image",
       prompt: "Generate a scene image",
-      characterIds: ["char-eric", "char-maize"],
-      settings: { sceneId: "scene-entrance" },
+      characterIds: ["char-brooklyn", "char-maddie"],
+      settings: { sceneId: "scene-wonder-question" },
       preferredProvider: "mock",
     });
     await vi.runAllTimersAsync();
 
     const completed = await jobs.getById(job.id);
-    const scene = await scenes.getById("scene-entrance");
+    const scene = await scenes.getById("scene-wonder-question");
     expect(scene?.sourceImageAssetId).toBe(completed?.outputAssetIds[0]);
     expect(scene?.status).toBe("image-ready");
   });
@@ -71,15 +71,15 @@ describe("RenderService", () => {
       projectId: "project-monster-truck",
       generationType: "image-to-video",
       prompt: "Animate scene",
-      sourceAssetIds: ["asset-stadium-arrival"],
-      characterIds: ["char-eric", "char-maize"],
-      settings: { sceneId: "scene-stadium-arrival", duration: 5 },
+      sourceAssetIds: ["asset-crew-clubhouse-concept"],
+      characterIds: ["char-brooklyn", "char-maddie", "char-layla", "char-maize"],
+      settings: { sceneId: "scene-clubhouse-meet", duration: 5 },
       preferredProvider: "mock",
     });
     await vi.runAllTimersAsync();
 
     const completed = await jobs.getById(job.id);
-    const scene = await scenes.getById("scene-stadium-arrival");
+    const scene = await scenes.getById("scene-clubhouse-meet");
     const clip = completed?.outputAssetIds[0] ? await assets.getById(completed.outputAssetIds[0]) : undefined;
     expect(completed?.status).toBe("completed");
     expect(clip?.type).toBe("video");
@@ -96,8 +96,8 @@ describe("RenderService", () => {
       projectId: "project-monster-truck",
       generationType: "image-to-video",
       prompt: "Cancel this clip",
-      sourceAssetIds: ["asset-stadium-arrival"],
-      settings: { sceneId: "scene-stadium-arrival" },
+      sourceAssetIds: ["asset-crew-clubhouse-concept"],
+      settings: { sceneId: "scene-clubhouse-meet" },
       preferredProvider: "mock",
     });
     await service.cancelJob(job.id);
@@ -112,10 +112,10 @@ describe("RenderService", () => {
     vi.useFakeTimers();
     const { service, jobs } = createService();
 
-    await service.retryFailedJob("job-failed-clip");
+    await service.retryFailedJob("job-first-attempt-failed");
     await vi.runAllTimersAsync();
 
-    const retried = await jobs.getById("job-failed-clip");
+    const retried = await jobs.getById("job-first-attempt-failed");
     expect(retried?.status).toBe("completed");
     expect(retried?.errorMessage).toBeUndefined();
   });

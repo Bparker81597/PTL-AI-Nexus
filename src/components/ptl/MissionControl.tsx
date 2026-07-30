@@ -3,6 +3,7 @@ import type { Asset, Character, Project, RenderJob, Scene } from "../../types/do
 import { projectProgress } from "../../utils/projectMetrics";
 import { FeaturePanel, GlassPanel, MetricChip, PtlButton, PtlProgress, SectionHeader, StatusBadge, StatusDot } from "./primitives";
 import { MediaPreview } from "./MediaPreview";
+import { ModuleGlyph, OrbitDivider, type ModuleKey } from "./brand";
 
 const statusForScene = (scene: Scene, jobs: RenderJob[]): string => {
   const sceneJobs = jobs.filter((job) => job.sceneId === scene.id);
@@ -27,22 +28,44 @@ export function ProjectHero({
 }) {
   const artwork = assets.find((asset) => asset.projectId === project.id && asset.type === "generated-image") ?? assets.find((asset) => asset.projectId === project.id);
   const progress = projectProgress(scenes);
+  const isPtlCrew = project.seriesId === "ptl-crew";
+  const heroTitle = isPtlCrew ? "PTL Crew" : project.name;
+  const currentProject = isPtlCrew ? "Series Foundation" : project.name;
+  const currentFocus = isPtlCrew ? "Character Bible and Pilot Development" : "Production assembly";
+  const progressAreas = isPtlCrew
+    ? ["Brand Identity", "Character Bibles", "Pilot Story", "Visual Development", "Animation Tests", "Voice Development"]
+    : project.productionGoals ?? [];
   return (
-    <FeaturePanel className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(260px,0.95fr)]">
+    <FeaturePanel className="grid min-w-0 gap-6 p-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(260px,0.95fr)]">
       <div className="relative z-10 flex min-w-0 flex-col justify-between gap-8">
         <div>
           <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--ptl-cyan-soft)]">
             <StatusDot tone="cyan" pulse />
             Active Project
           </div>
-          <h2 className="break-words font-display text-[28px] font-semibold leading-tight md:text-[34px]">{project.name}</h2>
+          <p className="mb-2 text-sm font-medium text-[color:var(--ptl-violet-soft)]">{project.brand ?? "A Creative Universe"}</p>
+          <h2 className="break-words font-display text-[30px] font-semibold leading-tight md:text-[38px]">{heroTitle}</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--ptl-text-secondary)] md:text-base">{project.description}</p>
+          <p className="mt-4 max-w-xl text-sm font-medium text-white">{project.tagline ?? "One platform. Infinite creativity. Everything connects."}</p>
+          <div className="mt-4 grid gap-2 text-sm text-[color:var(--ptl-text-secondary)] sm:grid-cols-2">
+            <p><strong className="text-white">Current project:</strong> {currentProject}</p>
+            <p><strong className="text-white">Current focus:</strong> {currentFocus}</p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to={`/projects/${project.id}`}><PtlButton>Open Project</PtlButton></Link>
-          <Link to={`/projects/${project.id}`}><PtlButton variant="secondary">New Scene</PtlButton></Link>
-          <PtlButton variant="ghost">Export Episode</PtlButton>
+          <Link to={`/projects/${project.id}`}><PtlButton>Continue Production</PtlButton></Link>
+          <Link to="/characters"><PtlButton variant="secondary">View Characters</PtlButton></Link>
+          <Link to={`/projects/${project.id}`}><PtlButton variant="secondary">Open Project</PtlButton></Link>
+          <Link to={`/projects/${project.id}`}><PtlButton variant="ghost">Create Scene</PtlButton></Link>
         </div>
+        <OrbitDivider />
+        {progressAreas.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {progressAreas.map((area) => (
+              <span key={area} className="rounded-[10px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--ptl-text-secondary)]">{area}</span>
+            ))}
+          </div>
+        )}
         <div className="grid gap-3 sm:grid-cols-4">
           <MetricChip label="Scenes" value={scenes.length} />
           <MetricChip label="Assets" value={assets.filter((asset) => asset.projectId === project.id).length} tone="violet" />
@@ -50,13 +73,14 @@ export function ProjectHero({
           <MetricChip label="Progress" value={`${progress}%`} tone="success" />
         </div>
       </div>
-      <div className="relative min-h-[260px] min-w-0 overflow-hidden rounded-[22px] border border-[color:var(--ptl-border-subtle)]">
+      <div className="relative min-h-[300px] min-w-0 overflow-hidden rounded-[22px] border border-[color:var(--ptl-border-subtle)]">
         {artwork ? (
-          <MediaPreview src={artwork.url} alt={`${project.name} project artwork`} className="h-full min-h-[260px]" />
+          <MediaPreview src={artwork.url} alt={`${project.name} project artwork`} className="h-full min-h-[300px]" />
         ) : (
-          <div className="h-full min-h-[260px] bg-[image:var(--ptl-gradient-primary)] opacity-70" />
+          <div className="h-full min-h-[300px] bg-[image:var(--ptl-gradient-primary)] opacity-70" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050b18]/80 via-[#050b18]/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#050b18]/85 via-[#050b18]/22 to-transparent" />
+        <div className="absolute right-6 top-6 rounded-full border border-[color:var(--ptl-border-active)] bg-[#050b18]/45 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--ptl-cyan-soft)] backdrop-blur-md">Nexus Film Desk</div>
         <div className="absolute bottom-4 left-4 right-4">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--ptl-text-secondary)]">Current Phase</p>
           <PtlProgress value={progress} label={`${progress}% episode assembly`} />
@@ -71,6 +95,7 @@ export function SceneTimeline({
   scenes,
   assets,
   jobs,
+  characters,
   selectedSceneId,
   onSelect,
 }: {
@@ -78,6 +103,7 @@ export function SceneTimeline({
   scenes: Scene[];
   assets: Asset[];
   jobs: RenderJob[];
+  characters?: Character[];
   selectedSceneId?: string;
   onSelect?: (scene: Scene) => void;
 }) {
@@ -91,9 +117,10 @@ export function SceneTimeline({
         action={<Link to={`/projects/${project.id}`}><PtlButton variant="ghost">Open Storyboard</PtlButton></Link>}
       />
       <div className="overflow-x-auto pb-2">
-        <div className="flex min-w-max gap-3">
+        <div className="relative flex min-w-max gap-3 before:absolute before:left-8 before:right-8 before:top-[102px] before:h-px before:bg-gradient-to-r before:from-[color:var(--ptl-cyan)]/30 before:via-[color:var(--ptl-violet)]/35 before:to-transparent">
           {ordered.map((scene) => {
             const thumbnail = assets.find((asset) => asset.id === scene.sourceImageAssetId || asset.id === scene.outputVideoAssetId);
+            const sceneCharacters = (characters ?? []).filter((character) => scene.characterIds.includes(character.id));
             const selected = scene.id === selectedSceneId;
             const status = statusForScene(scene, jobs);
             return (
@@ -102,7 +129,7 @@ export function SceneTimeline({
                 type="button"
                 onClick={() => onSelect?.(scene)}
                 onDoubleClick={() => navigate(`/projects/${project.id}`)}
-                className={`focus-ring group w-[240px] rounded-[18px] border p-3 text-left transition duration-200 hover:-translate-y-0.5 ${
+                className={`focus-ring group relative w-[240px] rounded-[18px] border p-3 text-left transition duration-200 hover:-translate-y-1 ${
                   selected ? "border-[color:var(--ptl-border-active)] bg-[color:var(--ptl-bg-hover)] shadow-[var(--ptl-glow-cyan)]" : "border-[color:var(--ptl-border-subtle)] bg-white/[0.035]"
                 }`}
               >
@@ -113,6 +140,14 @@ export function SceneTimeline({
                 <MediaPreview src={thumbnail?.url} alt={`${scene.title} thumbnail`} className="mb-3 aspect-video" />
                 <h3 className="line-clamp-2 font-display text-base font-semibold">{scene.title}</h3>
                 <p className="mt-2 line-clamp-2 text-xs leading-5 text-[color:var(--ptl-text-secondary)]">{scene.description}</p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {sceneCharacters.map((character) => (
+                    <span key={character.id} className="rounded-[8px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.045] px-2 py-1 text-[11px] font-semibold text-[color:var(--ptl-text-secondary)]">
+                      {character.name}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-3 text-[11px] text-[color:var(--ptl-text-muted)]">{scene.location} · {scene.emotion}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <PtlProgress value={status === "Complete" ? 100 : status === "Ready" ? 55 : status === "Rendering" ? 70 : 18} />
                   <span className="text-right text-xs text-[color:var(--ptl-text-muted)]">{scene.duration}s</span>
@@ -132,6 +167,7 @@ export function ModuleCard({
   summary,
   href,
   tone = "cyan",
+  icon,
   children,
 }: {
   title: string;
@@ -139,6 +175,7 @@ export function ModuleCard({
   summary: string;
   href: string;
   tone?: "cyan" | "violet" | "blue" | "magenta";
+  icon?: ModuleKey;
   children?: React.ReactNode;
 }) {
   const toneMap = {
@@ -151,7 +188,10 @@ export function ModuleCard({
     <Link to={href} className={`focus-ring group rounded-[20px] border bg-gradient-to-br p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--ptl-glow-cyan)] ${toneMap[tone]}`}>
       <div className="flex min-h-[150px] flex-col justify-between">
         <div>
-          <h3 className="font-display text-lg font-semibold">{title}</h3>
+          <div className="mb-3 flex items-center gap-3">
+            {icon && <span className="grid h-10 w-10 place-items-center rounded-[14px] border border-white/10 bg-white/[0.055] text-[color:var(--ptl-cyan-soft)]"><ModuleGlyph module={icon} className="h-5 w-5" /></span>}
+            <h3 className="font-display text-lg font-semibold">{title}</h3>
+          </div>
           <p className="mt-2 text-sm leading-5 text-[color:var(--ptl-text-secondary)]">{description}</p>
         </div>
         <div className="mt-4">

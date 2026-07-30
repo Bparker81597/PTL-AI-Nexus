@@ -8,7 +8,7 @@ const statuses: Array<RenderStatus | "all"> = ["all", "queued", "preparing", "ru
 
 export function RenderQueuePage() {
   const [params, setParams] = useSearchParams();
-  const { renderJobs, projects, scenes, assets, cancelJob, retryJob } = useClusterStore();
+  const { renderJobs, projects, scenes, assets, characters, cancelJob, retryJob } = useClusterStore();
   const projectId = params.get("projectId") ?? "all";
   const generationType = params.get("generationType") ?? "all";
   const status = params.get("status") ?? "all";
@@ -56,12 +56,14 @@ export function RenderQueuePage() {
             const scene = scenes.find((item) => item.id === job.sceneId);
             const source = assets.find((asset) => job.sourceAssetIds?.includes(asset.id));
             const output = assets.find((asset) => job.outputAssetIds.includes(asset.id));
+            const jobCharacters = characters.filter((character) => job.request.characterIds?.includes(character.id));
             return (
               <div key={job.id} className="grid gap-4 rounded-xl bg-white/7 p-4 xl:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_1fr_auto] xl:items-center">
                 <div>
                   <strong>{job.name}</strong>
                   <p className="text-sm text-slate-300">{job.projectName ?? "No project"}</p>
                   {scene && <p className="text-xs text-cyan-100">Scene: {scene.title}</p>}
+                  {jobCharacters.length > 0 && <p className="text-xs text-slate-300">Characters: {jobCharacters.map((character) => character.name).join(", ")}</p>}
                 </div>
                 <span className="font-bold">{job.generationType}</span>
                 <span>{job.providerId}</span>

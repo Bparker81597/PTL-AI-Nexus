@@ -1,12 +1,29 @@
-# PTL AI Cluster
+# PTL AI Nexus
 
-PTL AI Cluster is the Parker Tech Labs Mission Control workspace for modular creator AI production. It coordinates characters, projects, scenes, images, clips, audio, render jobs, assets, and AI engine configuration through one shared local-first system.
+PTL AI Nexus is the Parker Tech Labs Mission Control workspace for modular creator AI production.
+
+**A Creative Universe**
+
+One platform. Infinite creativity. Everything connects.
+
+It coordinates characters, projects, scenes, images, clips, audio, render jobs, assets, and AI engine configuration through one shared local-first system.
 
 The current app is mock-provider-first. It proves the complete creative workflow before connecting live GPU providers, Supabase, Cloudflare R2, or other production services.
 
+## Flagship Content
+
+The local seed content now centers **PTL Crew**, a PTL Universe Original from Parker Tech Labs.
+
+- **Tagline:** Imagine It. Draw It. Live It.
+- **Series statement:** Different strengths. One team. Endless possibilities.
+- **Core cast:** Brooklyn, Maddie, Layla, and Maize.
+- **Active production:** `PTL Crew - Series Foundation`.
+
+Brittany Parker is used at the Parker Tech Labs platform layer as the approved founder and studio-avatar reference for PTL AI Nexus. Brittany is not part of the PTL Crew cast.
+
 ## Mission Control
 
-The dashboard is now the **Mission Control** operating surface. It centers the active `Eric & Maize - Monster Truck Adventure` project with:
+The dashboard is now the **Mission Control** operating surface. It centers the active `PTL Crew - Series Foundation` project with:
 
 - Active project hero
 - Repository-driven project metrics

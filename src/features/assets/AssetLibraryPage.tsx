@@ -8,7 +8,14 @@ export function AssetLibraryPage() {
   const { assets, projects, scenes, characters, updateAsset, deleteAsset } = useClusterStore();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const filtered = useMemo(() => assets.filter((asset) => asset.name.toLowerCase().includes(query.toLowerCase())), [assets, query]);
+  const filtered = useMemo(
+    () =>
+      assets.filter((asset) => {
+        const searchable = [asset.name, asset.type, asset.category, ...(asset.tags ?? [])].filter(Boolean).join(" ").toLowerCase();
+        return searchable.includes(query.toLowerCase());
+      }),
+    [assets, query],
+  );
 
   return (
     <>
@@ -35,9 +42,15 @@ export function AssetLibraryPage() {
                 <div>
                   <h3 className="font-black">{asset.name}</h3>
                   <p className="text-sm text-slate-300">{asset.type}</p>
+                  {asset.category && <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">{asset.category}</p>}
                 </div>
                 <StatusBadge status={asset.isMock ? "mock" : "real"} />
               </div>
+              {asset.tags && asset.tags.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {asset.tags.slice(0, 6).map((tag) => <span key={tag} className="rounded-[10px] bg-white/10 px-2 py-1 text-xs">{tag}</span>)}
+                </div>
+              )}
               <dl className="mt-4 grid gap-2 text-sm text-slate-300">
                 <div><dt className="font-black text-cyan-100">Project</dt><dd>{project?.name ?? "Unassigned"}</dd></div>
                 <div><dt className="font-black text-cyan-100">Scene</dt><dd>{scene?.title ?? "Unassigned"}</dd></div>
