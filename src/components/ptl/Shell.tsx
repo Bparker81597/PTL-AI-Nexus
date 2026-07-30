@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useClusterStore } from "../../app/useClusterStore";
 import { providerStatusItems } from "../../providers/providerStatus";
 import { GlassPanel, IconButton, PtlButton, SectionHeader, StatusBadge, StatusDot } from "./primitives";
@@ -247,38 +247,64 @@ export function PtlAppShell({ children }: { children: ReactNode }) {
 
 function NexusOnboarding({ onClose }: { onClose: () => void }) {
   const steps = [
-    ["Mission Control", "Start with the active production and timeline."],
-    ["Characters", "Keep references, outfits, prompts, and consistency connected."],
-    ["Creative Modules", "Move images, clips, audio, and assets through one workflow."],
+    ["Mission Control", "Manage active productions, scenes, and progress.", "/", "mission"],
+    ["Characters", "Keep references, outfits, prompts, and continuity connected.", "/characters", "characters"],
+    ["Creative Modules", "Create and manage images, clips, audio, and assets.", "/canvas", "canvas"],
   ] as const;
 
   return (
-    <div className="fixed inset-0 z-[70] grid place-items-center bg-[#050b18]/78 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="nexus-welcome-title">
-      <GlassPanel className="w-[calc(100vw-2rem)] max-w-2xl min-w-0 border-[color:var(--ptl-border-active)] p-4 shadow-[var(--ptl-glow-cyan)] sm:p-6">
-        <div className="flex flex-col gap-5 md:flex-row md:items-center">
-          <NexusLogo className="h-24 w-24 shrink-0" />
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--ptl-cyan-soft)]">Parker Tech Labs</p>
-            <h2 id="nexus-welcome-title" className="mt-2 font-display text-3xl font-semibold">PTL AI Nexus</h2>
-            <p className="mt-1 text-lg text-[color:var(--ptl-text-secondary)]">A Creative Universe</p>
-            <p className="mt-4 break-words text-sm leading-6 text-[color:var(--ptl-text-secondary)]">
-              A professional creative production workspace for connected characters, scenes, assets, and AI-assisted workflows.
+    <div
+      className="fixed inset-0 z-[70] grid items-start justify-center overflow-y-auto bg-[#050b18]/78 px-4 py-[max(1rem,env(safe-area-inset-top))] backdrop-blur-md sm:items-center sm:px-6 sm:py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nexus-welcome-title"
+    >
+      <GlassPanel className="w-full max-w-[680px] min-w-0 rounded-[24px] border-[color:var(--ptl-border-active)] p-5 shadow-[var(--ptl-glow-cyan)] sm:p-6 md:p-7">
+        <div className="text-center md:flex md:items-center md:gap-6 md:text-left">
+          <NexusLogo className="mx-auto h-24 w-24 shrink-0 md:mx-0 md:h-28 md:w-28" />
+          <div className="mt-5 min-w-0 md:mt-0">
+            <p className="text-[clamp(0.75rem,2.8vw,0.875rem)] font-semibold uppercase tracking-[0.2em] text-[color:var(--ptl-cyan-soft)]">Parker Tech Labs</p>
+            <h2 id="nexus-welcome-title" className="mt-2 font-display text-[clamp(2rem,9vw,2.5rem)] font-semibold leading-tight">PTL AI Nexus</h2>
+            <p className="mt-2 text-[clamp(1.3rem,5vw,1.6rem)] leading-tight text-[color:var(--ptl-text-secondary)]">A Creative Universe</p>
+            <p className="mx-auto mt-4 max-w-xl text-[clamp(1rem,3.8vw,1.125rem)] leading-7 text-[color:var(--ptl-text-secondary)] md:mx-0">
+              Welcome to PTL AI Nexus, the creative production workspace from Parker Tech Labs. Let&apos;s bring your next world to life.
             </p>
+            <Link to="/" onClick={onClose} className="focus-ring mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-[12px] border border-transparent bg-[image:var(--ptl-gradient-primary)] px-5 text-sm font-semibold text-[#03101b] shadow-[var(--ptl-glow-cyan)] transition duration-200 hover:brightness-110 sm:w-auto">
+              Enter Mission Control
+            </Link>
           </div>
         </div>
-        <OrbitDivider className="my-5" />
-        <div className="grid gap-3 md:grid-cols-3">
-          {steps.map(([title, copy]) => (
-            <div key={title} className="rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
-              <p className="font-display text-base font-semibold">{title}</p>
-              <p className="mt-2 text-sm leading-5 text-[color:var(--ptl-text-secondary)]">{copy}</p>
-            </div>
+        <OrbitDivider className="my-4 sm:my-5" />
+        <div className="grid gap-2.5 md:grid-cols-3">
+          {steps.map(([title, copy, href, icon]) => (
+            <Link
+              key={title}
+              to={href}
+              onClick={onClose}
+              className="focus-ring flex min-h-16 items-center gap-3 rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4 text-left transition hover:border-[color:var(--ptl-border-active)] hover:bg-[color:var(--ptl-bg-hover)] md:block md:min-h-0"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] bg-white/[0.06] text-[color:var(--ptl-cyan-soft)] md:mb-3">
+                <ModuleGlyph module={icon} className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[clamp(1.05rem,4vw,1.2rem)] font-semibold leading-tight">{title}</span>
+                <span className="mt-1 block text-[clamp(0.95rem,3.3vw,1rem)] leading-5 text-[color:var(--ptl-text-secondary)]">{copy}</span>
+              </span>
+              <span className="shrink-0 text-lg text-[color:var(--ptl-cyan-soft)] md:hidden" aria-hidden="true">&gt;</span>
+            </Link>
           ))}
         </div>
-        <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
-          <p className="text-xs text-[color:var(--ptl-text-muted)]">Built by Parker Tech Labs</p>
-          <PtlButton className="w-full sm:w-auto" type="button" onClick={onClose}>Enter Nexus</PtlButton>
-        </div>
+        <Link
+          to="/settings"
+          onClick={onClose}
+          className="focus-ring mt-4 flex min-h-11 items-center justify-between rounded-[14px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.025] px-4 py-3 text-sm text-[color:var(--ptl-text-secondary)] transition hover:bg-white/[0.05]"
+        >
+          <span>
+            <span className="block font-semibold text-white">Built by Brittany Parker</span>
+            <span className="text-xs text-[color:var(--ptl-text-muted)]">Founder of Parker Tech Labs</span>
+          </span>
+          <span className="text-lg text-[color:var(--ptl-cyan-soft)]" aria-hidden="true">&gt;</span>
+        </Link>
       </GlassPanel>
     </div>
   );
