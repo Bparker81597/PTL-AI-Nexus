@@ -6,6 +6,7 @@ const universeId = "ptl-universe";
 const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path}`;
 const crewBoardUrl = publicAsset("assets/ptl-crew/brand/ptl-crew-character-board.png");
 const crewCastPanelsUrl = publicAsset("assets/ptl-crew/brand/ptl-crew-cast-panels.png");
+const crewSeriesKeyArtUrl = publicAsset("assets/ptl-crew/projects/ptl-crew-series-key-art.png");
 const brittanyBoardUrl = publicAsset("assets/parker-tech-labs/brittany/branding/brittanyverse-character-bible.png");
 const brooklynPortrait = publicAsset("assets/ptl-crew/characters/brooklyn/brooklyn-character-panel.png");
 const maddiePortrait = publicAsset("assets/ptl-crew/characters/maddie/maddie-character-panel.png");
@@ -71,7 +72,36 @@ export const sampleAssets: Asset[] = [
     tags: [...crewTags, "character", "reference"],
     universeId,
     seriesId,
-    metadata: { label: "Approved PTL Crew board", source: "provided-reference" },
+    metadata: {
+      assetRole: "production-reference-board",
+      usage: ["Character Studio", "Character Bibles", "Brand Identity", "Asset Library", "Production References"],
+      status: "Approved",
+      label: "Approved PTL Crew board",
+      source: "provided-reference",
+    },
+  },
+  {
+    id: "asset-ptl-crew-series-key-art",
+    name: "PTL Crew Project Key Art",
+    type: "storyboard",
+    url: crewSeriesKeyArtUrl,
+    projectId: "project-monster-truck",
+    characterIds: crewCharacterIds,
+    createdAt,
+    dimensions: "1560x1008",
+    isMock: true,
+    category: "Project Hero",
+    tags: [...crewTags, "series-key-art", "project-hero", "treehouse-hq", "approved"],
+    universeId,
+    seriesId,
+    metadata: {
+      assetRole: "mission-control-project-hero",
+      assetType: "Series Key Art",
+      usage: "Mission Control Active Project hero",
+      status: "Approved",
+      label: "Official PTL Crew cinematic series key art",
+      source: "provided-reference",
+    },
   },
   {
     id: "asset-ptl-crew-cast-panels",

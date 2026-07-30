@@ -1,8 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import type { Asset, Character, Project, RenderJob, Scene } from "../../types/domain";
+import { selectProjectHeroArtwork } from "../../utils/projectAssets";
 import { projectProgress } from "../../utils/projectMetrics";
 import { FeaturePanel, GlassPanel, MetricChip, PtlButton, PtlProgress, SectionHeader, StatusBadge, StatusDot } from "./primitives";
 import { MediaPreview } from "./MediaPreview";
+import { ProjectHeroArtwork } from "./ProjectHeroArtwork";
 import { ModuleGlyph, OrbitDivider, type ModuleKey } from "./brand";
 
 const statusForScene = (scene: Scene, jobs: RenderJob[]): string => {
@@ -26,7 +28,10 @@ export function ProjectHero({
   assets: Asset[];
   characters: Character[];
 }) {
-  const artwork = assets.find((asset) => asset.projectId === project.id && asset.type === "generated-image") ?? assets.find((asset) => asset.projectId === project.id);
+  const artwork =
+    selectProjectHeroArtwork(project, assets, "mission-control-project-hero") ??
+    assets.find((asset) => asset.projectId === project.id && asset.type === "generated-image") ??
+    assets.find((asset) => asset.projectId === project.id);
   const progress = projectProgress(scenes);
   const isPtlCrew = project.seriesId === "ptl-crew";
   const heroTitle = isPtlCrew ? "PTL Crew" : project.name;
@@ -73,19 +78,14 @@ export function ProjectHero({
           <MetricChip label="Progress" value={`${progress}%`} tone="success" />
         </div>
       </div>
-      <div className="relative min-h-[240px] min-w-0 overflow-hidden rounded-[22px] border border-[color:var(--ptl-border-subtle)] sm:min-h-[300px]">
-        {artwork ? (
-          <MediaPreview src={artwork.url} alt={`${project.name} project artwork`} className="h-full min-h-[240px] sm:min-h-[300px]" />
-        ) : (
-          <div className="h-full min-h-[300px] bg-[image:var(--ptl-gradient-primary)] opacity-70" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050b18]/85 via-[#050b18]/22 to-transparent" />
+      <ProjectHeroArtwork project={project} asset={artwork} variant="cinematic" fit="cover" showCaption={false} className="aspect-[16/10] min-h-[220px] sm:min-h-[300px] lg:min-h-0">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#050b18]/72 via-[#050b18]/16 to-transparent" />
         <div className="absolute right-3 top-3 rounded-full border border-[color:var(--ptl-border-active)] bg-[#050b18]/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--ptl-cyan-soft)] backdrop-blur-md sm:right-6 sm:top-6 sm:text-xs">Nexus Film Desk</div>
         <div className="absolute bottom-4 left-4 right-4">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--ptl-text-secondary)]">Current Phase</p>
           <PtlProgress value={progress} label={`${progress}% episode assembly`} />
         </div>
-      </div>
+      </ProjectHeroArtwork>
     </FeaturePanel>
   );
 }
