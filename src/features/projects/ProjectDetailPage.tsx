@@ -1,8 +1,10 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useClusterStore } from "../../app/useClusterStore";
 import { Button, Card, Field, PageHeader, StatusBadge, inputClass, textareaClass } from "../../components/Ui";
+import { ProductionContextIndicator, PtlProgress } from "../../components/ptl";
 import type { Scene } from "../../types/domain";
+import { continueDestination, episodeCompletion, nextTaskForScene, projectCompletion, unresolvedBlockers } from "../../utils/productionIntelligence";
 
 const tabs = ["Overview", "Characters", "Storyboard", "Scenes", "Images", "Clips", "Audio", "Render Jobs", "Activity"] as const;
 
@@ -13,8 +15,15 @@ export function ProjectDetailPage() {
     projects,
     characters,
     assets,
+    episodes,
+    locations,
+    productionContext,
     renderJobs,
     scenes,
+    seasons,
+    setActiveEpisode,
+    setActiveProject,
+    setActiveScene,
     createScene,
     updateScene,
     deleteScene,
@@ -34,6 +43,18 @@ export function ProjectDetailPage() {
   const projectAssets = assets.filter((asset) => asset.projectId === projectId);
   const projectJobs = renderJobs.filter((job) => job.projectId === projectId);
   const projectCharacters = characters.filter((character) => project?.characterIds.includes(character.id));
+  const projectEpisodes = episodes.filter((episode) => episode.projectId === projectId);
+  const projectSeasons = seasons.filter((season) => season.projectId === projectId);
+  const projectLocations = locations.filter((location) => location.projectId === projectId);
+  const activeEpisode = projectEpisodes.find((episode) => episode.id === productionContext.activeEpisodeId) ?? projectEpisodes[0];
+  const activeScene = projectScenes.find((scene) => scene.id === productionContext.activeSceneId) ?? projectScenes[0];
+  const nextTask = activeScene ? nextTaskForScene(activeScene, assets, renderJobs) : undefined;
+  const blockers = unresolvedBlockers(projectScenes, projectEpisodes);
+  const continueTo = continueDestination({ ...productionContext, activeProjectId: projectId, activeEpisodeId: activeEpisode?.id, activeSceneId: activeScene?.id }, projectScenes, assets, renderJobs);
+
+  useEffect(() => {
+    if (projectId) setActiveProject(projectId);
+  }, [projectId, setActiveProject]);
 
   if (!project) {
     return (
@@ -94,7 +115,8 @@ export function ProjectDetailPage() {
     <>
       <PageHeader eyebrow="Project workspace" title={project.name}>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setTab("Characters")}>Add Character</Button>
+          <Button onClick={() => navigate(continueTo)}>Continue Production</Button>
+          <Button variant="secondary" onClick={() => setTab("Characters")}>Add Character</Button>
           <Button variant="secondary" onClick={() => navigate(`/canvas?projectId=${project.id}`)}>Generate Image</Button>
           <Button variant="secondary" onClick={() => setTab("Storyboard")}>Create Scene</Button>
           <Button variant="secondary" onClick={() => navigate("/novatone")}>Generate Audio</Button>
@@ -102,6 +124,69 @@ export function ProjectDetailPage() {
           <Button variant="secondary">Export Project</Button>
         </div>
       </PageHeader>
+
+      <ProductionContextIndicator context={productionContext} projects={projects} seasons={seasons} episodes={episodes} scenes={scenes} characters={characters} locations={locations} className="mb-4" />
+
+      <Card className="mb-4">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">Production Hub</p>
+            <h2 className="mt-2 font-display text-2xl font-semibold">{project.name}</h2>
+            <p className="mt-2 text-sm font-semibold text-[color:var(--ptl-violet-soft)]">{project.tagline}</p>
+            <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">{project.description}</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
+              <Metric label="Completion" value={`${projectCompletion(project, scenes)}%`} />
+              <Metric label="Episode" value={activeEpisode ? `E${activeEpisode.number}` : "None"} />
+              <Metric label="Current Scene" value={activeScene ? `Scene ${activeScene.order}` : "None"} />
+              <Metric label="Render Jobs" value={projectJobs.length} />
+              <Metric label="Locations" value={projectLocations.length} />
+            </div>
+          </div>
+          <div className="rounded-[18px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Next Recommended Task</p>
+            <h3 className="mt-2 font-display text-lg font-semibold">{nextTask?.label ?? "Open the first incomplete scene"}</h3>
+            <p className="mt-2 text-sm text-slate-300">{blockers.length ? `${blockers.length} blocker needs attention.` : "No production blockers detected for the active scene."}</p>
+            <div className="mt-4"><Button onClick={() => navigate(continueTo)}>Continue Production</Button></div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="mb-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">Episodes</p>
+            <h2 className="font-display text-xl font-semibold">Season structure</h2>
+          </div>
+          <p className="text-sm text-slate-300">{projectSeasons.map((season) => season.title).join(", ")}</p>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {projectEpisodes.map((episode) => {
+            const episodeScenes = projectScenes.filter((scene) => episode.sceneIds.includes(scene.id));
+            const completedScenes = episodeScenes.filter((scene) => scene.status === "completed").length;
+            return (
+              <div key={episode.id} className="rounded-[18px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4 text-left transition hover:border-[color:var(--ptl-border-active)] hover:bg-[color:var(--ptl-bg-hover)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Episode {episode.number}</p>
+                    <h3 className="mt-1 font-display text-lg font-semibold">{episode.title}</h3>
+                  </div>
+                  <StatusBadge status={episode.status} />
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{episode.summary}</p>
+                <div className="mt-3"><PtlProgress value={episodeCompletion(episode, scenes)} label={`${episodeCompletion(episode, scenes)}% complete`} /></div>
+                <p className="mt-2 text-xs text-slate-300">{completedScenes} of {episodeScenes.length} scenes complete · {episode.productionPhase}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button onClick={() => {
+                    setActiveEpisode(episode.id);
+                    navigate(continueDestination({ ...productionContext, activeEpisodeId: episode.id, activeSceneId: episode.sceneIds[0] }, projectScenes, assets, renderJobs));
+                  }}>Continue Episode</Button>
+                  <Button variant="secondary" onClick={() => navigate(`/projects/${project.id}/episodes/${episode.id}/scenes/${episode.sceneIds[0]}`)}>Open Episode</Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
 
       <div className="mb-4 flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Project sections">
         {tabs.map((item) => (
@@ -178,6 +263,10 @@ export function ProjectDetailPage() {
                   <p><strong className="text-white">Duration:</strong> {scene.duration}s</p>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
+                  <Button variant="secondary" onClick={() => {
+                    setActiveScene(scene.id);
+                    navigate(`/projects/${project.id}/episodes/${scene.episodeId ?? activeEpisode?.id ?? ""}/scenes/${scene.id}`);
+                  }}>Open Scene Workspace</Button>
                   <Button variant="secondary" onClick={() => setEditingScene(scene)}>Edit</Button>
                   <Button variant="secondary" onClick={() => void duplicateScene(scene.id)}>Duplicate</Button>
                   <Button variant="secondary" onClick={() => void reorderScene(scene.id, "up")}>Move Up</Button>
@@ -238,6 +327,10 @@ export function ProjectDetailPage() {
       )}
     </>
   );
+}
+
+function Metric({ label, value }: { label: string; value: string | number }) {
+  return <div className="rounded-[14px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-3"><p className="text-xs uppercase tracking-[0.14em] text-[color:var(--ptl-text-muted)]">{label}</p><p className="mt-1 font-display text-xl font-semibold text-white">{value}</p></div>;
 }
 
 function AssetStrip({ assets }: { assets: ReturnType<typeof useClusterStore.getState>["assets"] }) {

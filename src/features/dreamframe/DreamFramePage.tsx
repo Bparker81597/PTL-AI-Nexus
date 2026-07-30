@@ -17,16 +17,17 @@ export function DreamFramePage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const routeState = (location.state ?? {}) as DreamFrameRouteState;
-  const { assets, characters, projects, renderJobs, scenes, generate, refreshAll } = useClusterStore();
-  const [selectedProjectId, setSelectedProjectId] = useState(routeState.projectId ?? params.get("projectId") ?? projects[0]?.id ?? "");
-  const [selectedSceneId, setSelectedSceneId] = useState(routeState.sceneId ?? params.get("sceneId") ?? "");
+  const { assets, characters, projects, renderJobs, scenes, productionContext, locations, generate, refreshAll, setWorkflowFocus } = useClusterStore();
+  const [selectedProjectId, setSelectedProjectId] = useState(routeState.projectId ?? params.get("projectId") ?? productionContext.activeProjectId ?? projects[0]?.id ?? "");
+  const [selectedSceneId, setSelectedSceneId] = useState(routeState.sceneId ?? params.get("sceneId") ?? productionContext.activeSceneId ?? "");
   const [sourceAssetId, setSourceAssetId] = useState(routeState.sourceAssetId ?? params.get("sourceAssetId") ?? "");
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<string[]>(
-    routeState.characterIds ?? params.get("characterIds")?.split(",").filter(Boolean) ?? characters.slice(0, 2).map((character) => character.id),
+    routeState.characterIds ?? params.get("characterIds")?.split(",").filter(Boolean) ?? productionContext.activeCharacterIds ?? characters.slice(0, 2).map((character) => character.id),
   );
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
   const sourceAsset = assets.find((asset) => asset.id === sourceAssetId);
   const selectedCharacters = characters.filter((character) => selectedCharacterIds.includes(character.id));
+  const selectedLocation = locations.find((location) => location.id === (selectedScene?.locationId ?? productionContext.activeLocationId));
   const projectScenes = scenes.filter((scene) => scene.projectId === selectedProjectId);
   const sourceImages = assets.filter((asset) => asset.projectId === selectedProjectId && asset.type === "generated-image");
   const [motionPrompt, setMotionPrompt] = useState(routeState.motionPrompt ?? selectedScene?.motionPrompt ?? "Camera tracks the monster truck as it jumps through teal energy rings");
@@ -47,6 +48,10 @@ export function DreamFramePage() {
     () => assets.find((asset) => lastJob?.outputAssetIds.includes(asset.id)),
     [assets, lastJob],
   );
+
+  useEffect(() => {
+    setWorkflowFocus("animation", "/dreamframe");
+  }, [setWorkflowFocus]);
 
   useEffect(() => {
     if (!lastJobId) return;
@@ -94,6 +99,10 @@ export function DreamFramePage() {
         sceneId: selectedSceneId,
         cameraMovement,
         duration,
+        episodeId: selectedScene?.episodeId ?? productionContext.activeEpisodeId,
+        seasonId: selectedScene?.seasonId ?? productionContext.activeSeasonId,
+        locationId: selectedLocation?.id,
+        productionNotes: selectedScene?.notes,
         aspectRatio,
         resolution,
         fps,
@@ -142,6 +151,13 @@ export function DreamFramePage() {
             </Field>
             <Field label="Motion prompt"><textarea className={textareaClass} value={motionPrompt} onChange={(event) => setMotionPrompt(event.target.value)} /></Field>
             <Field label="Character-action prompt"><textarea className={textareaClass} value={actionPrompt} onChange={(event) => setActionPrompt(event.target.value)} /></Field>
+            {selectedLocation && (
+              <div className="rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Scene location</p>
+                <h3 className="mt-2 font-display text-lg font-semibold">{selectedLocation.name}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{selectedLocation.visualNotes}</p>
+              </div>
+            )}
             <div className="rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Animation profiles</p>
               <div className="mt-3 grid gap-3">

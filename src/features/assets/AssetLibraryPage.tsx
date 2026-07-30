@@ -5,16 +5,28 @@ import { Button, Card, PageHeader, StatusBadge, inputClass } from "../../compone
 
 export function AssetLibraryPage() {
   const navigate = useNavigate();
-  const { assets, projects, scenes, characters, updateAsset, deleteAsset } = useClusterStore();
+  const { assets, projects, scenes, characters, productionContext, updateAsset, deleteAsset } = useClusterStore();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [contextOnly, setContextOnly] = useState(false);
   const filtered = useMemo(
     () =>
       assets.filter((asset) => {
         const searchable = [asset.name, asset.type, asset.category, ...(asset.tags ?? [])].filter(Boolean).join(" ").toLowerCase();
-        return searchable.includes(query.toLowerCase());
+        const matchesQuery = searchable.includes(query.toLowerCase());
+        const matchesContextCharacter = Boolean(
+          (asset.characterId && productionContext.activeCharacterIds.includes(asset.characterId)) ||
+          asset.characterIds?.some((id) => productionContext.activeCharacterIds.includes(id)),
+        );
+        const matchesContext =
+          !contextOnly ||
+          asset.projectId === productionContext.activeProjectId ||
+          asset.episodeId === productionContext.activeEpisodeId ||
+          asset.sceneId === productionContext.activeSceneId ||
+          matchesContextCharacter;
+        return matchesQuery && matchesContext;
       }),
-    [assets, query],
+    [assets, contextOnly, productionContext, query],
   );
 
   return (
@@ -23,6 +35,10 @@ export function AssetLibraryPage() {
         <div className="flex flex-col gap-2 sm:flex-row">
           <input aria-label="Search assets" className={inputClass} placeholder="Search assets" value={query} onChange={(event) => setQuery(event.target.value)} />
           <select aria-label="View mode" className={inputClass} value={view} onChange={(event) => setView(event.target.value as "grid" | "list")}><option>grid</option><option>list</option></select>
+          <label className="flex min-h-11 items-center gap-2 rounded-[12px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.055] px-3 text-sm text-white">
+            <input type="checkbox" checked={contextOnly} onChange={(event) => setContextOnly(event.target.checked)} />
+            Current context
+          </label>
         </div>
       </PageHeader>
       <div className={view === "grid" ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3" : "grid gap-3"}>
@@ -64,6 +80,7 @@ export function AssetLibraryPage() {
                 <Button variant="secondary">Open</Button>
                 {asset.type === "generated-image" && <Button variant="secondary" onClick={() => navigate(`/canvas?projectId=${asset.projectId ?? ""}&sceneId=${asset.sceneId ?? ""}`)}>Use in NovaCanvas</Button>}
                 {asset.type === "generated-image" && <Button onClick={() => navigate(`/dreamframe?projectId=${asset.projectId ?? ""}&sceneId=${asset.sceneId ?? ""}&sourceAssetId=${asset.id}`, { state: { projectId: asset.projectId, sceneId: asset.sceneId, sourceAssetId: asset.id, characterIds: asset.characterIds } })}>Use in DreamFrame</Button>}
+                {scene && <Button variant="secondary" onClick={() => navigate(`/projects/${scene.projectId}/episodes/${scene.episodeId ?? ""}/scenes/${scene.id}`)}>Open Scene</Button>}
                 {project ? (
                   <Button variant="secondary" onClick={() => void updateAsset({ ...asset, projectId: undefined })}>Remove from Project</Button>
                 ) : (

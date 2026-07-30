@@ -1,21 +1,35 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useClusterStore } from "../../app/useClusterStore";
 import { Button, Card, Field, PageHeader, inputClass, textareaClass } from "../../components/Ui";
 
 export function NovaTonePage() {
   const { assets, projects, characters, generate } = useClusterStore();
-  const [selectedCharacterId, setSelectedCharacterId] = useState(characters[0]?.id ?? "");
+  const [params] = useSearchParams();
+  const { productionContext, scenes, locations, setWorkflowFocus } = useClusterStore();
+  const selectedScene = scenes.find((scene) => scene.id === (params.get("sceneId") ?? productionContext.activeSceneId));
+  const selectedLocation = locations.find((location) => location.id === (selectedScene?.locationId ?? productionContext.activeLocationId));
+  const [selectedCharacterId, setSelectedCharacterId] = useState(productionContext.activeCharacterIds[0] ?? characters[0]?.id ?? "");
   const selectedCharacter = characters.find((character) => character.id === selectedCharacterId);
-  const [dialogue, setDialogue] = useState("Brooklyn: I have an idea!");
+  const [dialogue, setDialogue] = useState(selectedScene?.dialogue || "Brooklyn: I have an idea!");
+
+  useEffect(() => {
+    setWorkflowFocus("audio", "/novatone");
+  }, [setWorkflowFocus]);
 
   const submit = async (generationType: "voice" | "music" | "sound-effect") => {
     await generate({
-      projectId: projects[0]?.id,
+      projectId: productionContext.activeProjectId ?? projects[0]?.id,
       generationType,
       prompt: dialogue,
       characterIds: selectedCharacter ? [selectedCharacter.id] : undefined,
       settings: {
         duration: 12,
+        sceneId: selectedScene?.id ?? productionContext.activeSceneId,
+        episodeId: selectedScene?.episodeId ?? productionContext.activeEpisodeId,
+        seasonId: selectedScene?.seasonId ?? productionContext.activeSeasonId,
+        locationId: selectedLocation?.id,
+        productionType: generationType === "voice" ? "dialogue" : generationType === "music" ? "music" : "sound-effect",
         voice: selectedCharacter?.tone ?? "Bright kid hero",
         speakingStyle: selectedCharacter?.speakingStyle,
         voiceNotes: selectedCharacter?.voiceNotes,
@@ -42,6 +56,13 @@ export function NovaTonePage() {
                 <div className="mt-3 flex flex-wrap gap-2">
                   {(selectedCharacter.catchphrases ?? []).map((phrase) => <span key={phrase} className="rounded-[10px] bg-white/10 px-3 py-2 text-xs font-bold">{phrase}</span>)}
                 </div>
+              </div>
+            )}
+            {selectedScene && (
+              <div className="rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Scene audio context</p>
+                <h3 className="mt-2 font-display text-lg font-semibold">{selectedScene.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{selectedScene.emotion} at {selectedLocation?.name ?? selectedScene.location}</p>
               </div>
             )}
             <Field label="Dialogue input"><textarea className={textareaClass} value={dialogue} onChange={(e) => setDialogue(e.target.value)} /></Field>

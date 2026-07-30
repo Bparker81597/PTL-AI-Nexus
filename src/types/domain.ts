@@ -10,6 +10,43 @@ export type AssetType =
 
 export type RenderStatus = "queued" | "preparing" | "running" | "completed" | "failed" | "cancelled";
 
+export type ProductionPhase =
+  | "concept"
+  | "writing"
+  | "preproduction"
+  | "storyboard"
+  | "visual-development"
+  | "animation"
+  | "audio"
+  | "rendering"
+  | "review"
+  | "completed";
+
+export type EpisodeStatus = "planning" | "writing" | "storyboard" | "animation" | "audio" | "review" | "completed";
+export type SceneStageState = "not-started" | "in-progress" | "blocked" | "ready-for-review" | "approved" | "completed";
+export type ApprovalState = "not-ready" | "needs-review" | "approved" | "changes-requested";
+
+export interface SceneStageProgress {
+  story: SceneStageState;
+  storyboard: SceneStageState;
+  visualAssets: SceneStageState;
+  animation: SceneStageState;
+  voice: SceneStageState;
+  music: SceneStageState;
+  soundEffects: SceneStageState;
+  finalRender: SceneStageState;
+  review: SceneStageState;
+}
+
+export interface ProductionBlocker {
+  id: string;
+  scope: "project" | "episode" | "scene" | "asset" | "render";
+  recordId: string;
+  message: string;
+  severity: "info" | "warning" | "critical";
+  resolved: boolean;
+}
+
 export type GenerationType =
   | "image"
   | "image-to-video"
@@ -37,6 +74,11 @@ export interface Asset {
   tags?: string[];
   universeId?: string;
   seriesId?: string;
+  seasonId?: string;
+  episodeId?: string;
+  locationId?: string;
+  productionStage?: keyof SceneStageProgress;
+  reviewStatus?: ApprovalState;
 }
 
 export interface Character {
@@ -117,6 +159,9 @@ export interface Project {
   productionGoals?: string[];
   universeId?: string;
   seriesId?: string;
+  activeSeasonId?: string;
+  activeEpisodeId?: string;
+  currentPhase?: ProductionPhase;
 }
 
 export interface Scene {
@@ -146,6 +191,15 @@ export interface Scene {
   objective?: string;
   universeId?: string;
   seriesId?: string;
+  seasonId?: string;
+  episodeId?: string;
+  locationId?: string;
+  productionPhase?: ProductionPhase;
+  stageProgress?: SceneStageProgress;
+  notes?: string;
+  blockers?: ProductionBlocker[];
+  nextTask?: string;
+  approvalState?: ApprovalState;
 }
 
 export interface Storyboard {
@@ -154,6 +208,60 @@ export interface Storyboard {
   title: string;
   sceneIds: string[];
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface Season {
+  id: string;
+  projectId: string;
+  number: number;
+  title: string;
+  summary: string;
+  episodeIds: string[];
+  status: EpisodeStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Episode {
+  id: string;
+  projectId: string;
+  seasonId: string;
+  number: number;
+  title: string;
+  summary: string;
+  status: EpisodeStatus;
+  productionPhase: ProductionPhase;
+  sceneIds: string[];
+  blockers?: ProductionBlocker[];
+  artworkAssetId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Location {
+  id: string;
+  projectId: string;
+  name: string;
+  description: string;
+  type: "interior" | "exterior" | "mixed";
+  visualNotes: string;
+  assetIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductionContext {
+  activeProjectId?: string;
+  activeSeasonId?: string;
+  activeEpisodeId?: string;
+  activeSceneId?: string;
+  activeCharacterIds: string[];
+  activeLocationId?: string;
+  productionPhase: ProductionPhase;
+  currentTask?: string;
+  workflowFocus?: string;
+  lastWorkspace?: string;
   updatedAt: string;
 }
 
@@ -175,6 +283,11 @@ export interface RenderJob {
   sceneId?: string;
   cancelledAt?: string;
   errorMessage?: string;
+  seasonId?: string;
+  episodeId?: string;
+  locationId?: string;
+  productionStage?: keyof SceneStageProgress;
+  reviewStatus?: ApprovalState;
 }
 
 export interface GenerationRequest {

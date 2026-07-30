@@ -8,13 +8,19 @@ import type {
   CreateCharacterInput,
   CreateProjectInput,
   CreateSceneInput,
+  Episode,
   GenerationRequest,
+  Location,
+  ProductionContext,
+  ProductionPhase,
   Project,
   RenderJob,
   Scene,
+  Season,
   UserSettings,
 } from "../types/domain";
 import { createId, nowIso } from "../utils/ids";
+import { sampleEpisodes, sampleLocations, sampleProductionContext, sampleSeasons } from "../data/sampleData";
 
 interface Notice {
   id: string;
@@ -22,12 +28,32 @@ interface Notice {
   tone: "success" | "error" | "info";
 }
 
+const contextKey = "ptl.productionContext";
+
+const readProductionContext = (): ProductionContext => {
+  if (typeof window === "undefined") return sampleProductionContext;
+  const raw = window.localStorage.getItem(contextKey);
+  return raw ? { ...sampleProductionContext, ...(JSON.parse(raw) as ProductionContext) } : sampleProductionContext;
+};
+
+const writeProductionContext = (context: ProductionContext): ProductionContext => {
+  const next = { ...context, updatedAt: nowIso() };
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(contextKey, JSON.stringify(next));
+  }
+  return next;
+};
+
 interface ClusterState {
   assets: Asset[];
   characters: Character[];
+  episodes: Episode[];
+  locations: Location[];
+  productionContext: ProductionContext;
   projects: Project[];
   renderJobs: RenderJob[];
   scenes: Scene[];
+  seasons: Season[];
   settings?: UserSettings;
   notices: Notice[];
   loading: boolean;
@@ -49,6 +75,16 @@ interface ClusterState {
   retryJob: (jobId: string) => Promise<void>;
   updateAsset: (asset: Asset) => Promise<Asset>;
   deleteAsset: (assetId: string) => Promise<void>;
+  setActiveProject: (projectId?: string) => void;
+  setActiveSeason: (seasonId?: string) => void;
+  setActiveEpisode: (episodeId?: string) => void;
+  setActiveScene: (sceneId?: string) => void;
+  setActiveCharacters: (characterIds: string[]) => void;
+  setActiveLocation: (locationId?: string) => void;
+  setProductionPhase: (phase: ProductionPhase) => void;
+  setWorkflowFocus: (focus?: string, workspace?: string) => void;
+  clearProductionContext: () => void;
+  restoreLastProductionContext: () => void;
   refreshAll: () => Promise<void>;
   refreshJobs: () => Promise<void>;
   dismissNotice: (id: string) => void;
@@ -65,9 +101,13 @@ const sortScenes = (scenes: Scene[]) => [...scenes].sort((a, b) => a.order - b.o
 export const useClusterStore = create<ClusterState>((set, get) => ({
   assets: [],
   characters: [],
+  episodes: sampleEpisodes,
+  locations: sampleLocations,
+  productionContext: readProductionContext(),
   projects: [],
   renderJobs: [],
   scenes: [],
+  seasons: sampleSeasons,
   notices: [],
   loading: true,
   async load() {
@@ -146,6 +186,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       scenes: sortScenes([scene, ...get().scenes]),
       notices: [pushNotice("Scene created.", "success"), ...get().notices],
     });
+    get().setActiveScene(scene.id);
     return scene;
   },
   async updateScene(scene) {
@@ -199,8 +240,18 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     await get().refreshAll();
   },
   async generate(input) {
+    const context = get().productionContext;
     const job = await renderService.startGeneration({
       ...input,
+      projectId: input.projectId ?? context.activeProjectId,
+      characterIds: input.characterIds ?? context.activeCharacterIds,
+      settings: {
+        ...input.settings,
+        sceneId: input.settings.sceneId ?? context.activeSceneId,
+        episodeId: input.settings.episodeId ?? context.activeEpisodeId,
+        seasonId: input.settings.seasonId ?? context.activeSeasonId,
+        locationId: input.settings.locationId ?? context.activeLocationId,
+      },
       id: createId("request"),
       preferredProvider: input.preferredProvider ?? get().settings?.preferredProvider ?? "mock",
     });
@@ -234,6 +285,91 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       notices: [pushNotice("Asset deleted.", "info"), ...get().notices],
     });
   },
+  setActiveProject(projectId) {
+    const state = get();
+    const project = state.projects.find((item) => item.id === projectId);
+    const validScenes = state.scenes.filter((scene) => scene.projectId === projectId);
+    const validCharacters = new Set(project?.characterIds ?? []);
+    const currentScene = validScenes.find((scene) => scene.id === state.productionContext.activeSceneId);
+    const next: ProductionContext = {
+      ...state.productionContext,
+      activeProjectId: projectId,
+      activeSeasonId: state.seasons.some((season) => season.id === state.productionContext.activeSeasonId && season.projectId === projectId)
+        ? state.productionContext.activeSeasonId
+        : project?.activeSeasonId ?? state.seasons.find((season) => season.projectId === projectId)?.id,
+      activeEpisodeId: state.episodes.some((episode) => episode.id === state.productionContext.activeEpisodeId && episode.projectId === projectId)
+        ? state.productionContext.activeEpisodeId
+        : project?.activeEpisodeId ?? state.episodes.find((episode) => episode.projectId === projectId)?.id,
+      activeSceneId: currentScene?.id,
+      activeCharacterIds: state.productionContext.activeCharacterIds.filter((id) => validCharacters.has(id)),
+      activeLocationId: state.locations.some((location) => location.id === state.productionContext.activeLocationId && location.projectId === projectId)
+        ? state.productionContext.activeLocationId
+        : undefined,
+      productionPhase: project?.currentPhase ?? state.productionContext.productionPhase,
+    };
+    set({ productionContext: writeProductionContext(next) });
+  },
+  setActiveSeason(seasonId) {
+    const season = get().seasons.find((item) => item.id === seasonId);
+    const currentEpisode = get().episodes.find((episode) => episode.id === get().productionContext.activeEpisodeId && episode.seasonId === seasonId);
+    const nextEpisode = currentEpisode ?? get().episodes.find((episode) => episode.seasonId === seasonId);
+    set({
+      productionContext: writeProductionContext({
+        ...get().productionContext,
+        activeSeasonId: seasonId,
+        activeProjectId: season?.projectId ?? get().productionContext.activeProjectId,
+        activeEpisodeId: nextEpisode?.id,
+        activeSceneId: nextEpisode?.sceneIds.includes(get().productionContext.activeSceneId ?? "") ? get().productionContext.activeSceneId : nextEpisode?.sceneIds[0],
+      }),
+    });
+  },
+  setActiveEpisode(episodeId) {
+    const episode = get().episodes.find((item) => item.id === episodeId);
+    const currentSceneId = get().productionContext.activeSceneId;
+    set({
+      productionContext: writeProductionContext({
+        ...get().productionContext,
+        activeEpisodeId: episodeId,
+        activeSeasonId: episode?.seasonId ?? get().productionContext.activeSeasonId,
+        activeProjectId: episode?.projectId ?? get().productionContext.activeProjectId,
+        activeSceneId: episode?.sceneIds.includes(currentSceneId ?? "") ? currentSceneId : episode?.sceneIds[0],
+        productionPhase: episode?.productionPhase ?? get().productionContext.productionPhase,
+      }),
+    });
+  },
+  setActiveScene(sceneId) {
+    const scene = get().scenes.find((item) => item.id === sceneId);
+    set({
+      productionContext: writeProductionContext({
+        ...get().productionContext,
+        activeProjectId: scene?.projectId ?? get().productionContext.activeProjectId,
+        activeSeasonId: scene?.seasonId ?? get().productionContext.activeSeasonId,
+        activeEpisodeId: scene?.episodeId ?? get().productionContext.activeEpisodeId,
+        activeSceneId: sceneId,
+        activeCharacterIds: scene?.characterIds ?? get().productionContext.activeCharacterIds,
+        activeLocationId: scene?.locationId ?? get().productionContext.activeLocationId,
+        productionPhase: scene?.productionPhase ?? get().productionContext.productionPhase,
+      }),
+    });
+  },
+  setActiveCharacters(characterIds) {
+    set({ productionContext: writeProductionContext({ ...get().productionContext, activeCharacterIds: characterIds }) });
+  },
+  setActiveLocation(locationId) {
+    set({ productionContext: writeProductionContext({ ...get().productionContext, activeLocationId: locationId }) });
+  },
+  setProductionPhase(phase) {
+    set({ productionContext: writeProductionContext({ ...get().productionContext, productionPhase: phase }) });
+  },
+  setWorkflowFocus(focus, workspace) {
+    set({ productionContext: writeProductionContext({ ...get().productionContext, workflowFocus: focus, lastWorkspace: workspace }) });
+  },
+  clearProductionContext() {
+    set({ productionContext: writeProductionContext({ ...sampleProductionContext, activeSceneId: undefined, activeCharacterIds: [] }) });
+  },
+  restoreLastProductionContext() {
+    set({ productionContext: readProductionContext() });
+  },
   async refreshAll() {
     const [assets, characters, projects, renderJobs, scenes, settings] = await Promise.all([
       repositories.assets.list(),
@@ -243,7 +379,18 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       repositories.scenes.list(),
       repositories.settings.get(),
     ]);
-    set({ assets, characters, projects, renderJobs, scenes: sortScenes(scenes), settings });
+    set({
+      assets,
+      characters,
+      projects,
+      renderJobs,
+      scenes: sortScenes(scenes),
+      settings,
+      seasons: sampleSeasons,
+      episodes: sampleEpisodes,
+      locations: sampleLocations,
+      productionContext: readProductionContext(),
+    });
   },
   async refreshJobs() {
     await get().refreshAll();

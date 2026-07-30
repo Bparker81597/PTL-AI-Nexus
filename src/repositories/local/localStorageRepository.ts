@@ -399,6 +399,25 @@ export class LocalSceneRepository implements SceneRepository {
       fps: 24,
       motionStrength: 0.55,
       status: "draft",
+      seasonId: "season-ptl-crew-1",
+      episodeId: "episode-ptl-crew-s1e1",
+      locationId: "loc-treehouse-hq",
+      productionPhase: "writing",
+      stageProgress: {
+        story: "not-started",
+        storyboard: "not-started",
+        visualAssets: "not-started",
+        animation: "not-started",
+        voice: "not-started",
+        music: "not-started",
+        soundEffects: "not-started",
+        finalRender: "not-started",
+        review: "not-started",
+      },
+      notes: "",
+      blockers: [],
+      nextTask: "Finish the scene outline.",
+      approvalState: "not-ready",
       createdAt: timestamp,
       updatedAt: timestamp,
     });
@@ -415,7 +434,21 @@ export class LocalSceneRepository implements SceneRepository {
   private normalizeScene(scene: Scene, index: number): Scene {
     const legacy = scene as Scene & { name?: string; assetIds?: string[] };
     const seed = sampleScenes.find((item) => item.id === scene.id);
-    if (seed) return { ...scene, ...seed };
+    if (seed) {
+      return {
+        ...seed,
+        ...scene,
+        seasonId: scene.seasonId ?? seed.seasonId,
+        episodeId: scene.episodeId ?? seed.episodeId,
+        locationId: scene.locationId ?? seed.locationId,
+        productionPhase: scene.productionPhase ?? seed.productionPhase,
+        stageProgress: { ...seed.stageProgress, ...scene.stageProgress },
+        blockers: scene.blockers ?? seed.blockers,
+        notes: scene.notes ?? seed.notes,
+        nextTask: scene.nextTask ?? seed.nextTask,
+        approvalState: scene.approvalState ?? seed.approvalState,
+      };
+    }
     return {
       ...scene,
       title: scene.title ?? legacy.name ?? "Untitled scene",

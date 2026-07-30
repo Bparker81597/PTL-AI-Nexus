@@ -7,25 +7,32 @@ import {
   LoadingState,
   ModuleCard,
   OrbitDivider,
+  ProductionContextIndicator,
   ProjectHero,
   PtlButton,
   SceneTimeline,
   SectionHeader,
   StatusBadge,
 } from "../../components/ptl";
-import { projectProgress } from "../../utils/projectMetrics";
+import { continueDestination, missingRequirements, nextTaskForScene, projectCompletion, recentCompletions, unresolvedBlockers } from "../../utils/productionIntelligence";
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { assets, characters, projects, renderJobs, scenes, loading } = useClusterStore();
-  const activeProject = projects.find((project) => project.id === "project-monster-truck") ?? projects[0];
+  const { assets, characters, episodes, locations, productionContext, projects, renderJobs, scenes, seasons, loading, setActiveScene } = useClusterStore();
+  const activeProject = projects.find((project) => project.id === productionContext.activeProjectId) ?? projects.find((project) => project.id === "project-monster-truck") ?? projects[0];
   const projectScenes = activeProject ? scenes.filter((scene) => scene.projectId === activeProject.id) : [];
-  const [selectedSceneId, setSelectedSceneId] = useState(projectScenes[0]?.id);
+  const [selectedSceneId, setSelectedSceneId] = useState(productionContext.activeSceneId ?? projectScenes[0]?.id);
   const selectedScene = projectScenes.find((scene) => scene.id === selectedSceneId) ?? projectScenes[0];
+  const activeEpisode = episodes.find((episode) => episode.id === productionContext.activeEpisodeId);
   const imageAssets = assets.filter((asset) => asset.type === "generated-image");
   const videoAssets = assets.filter((asset) => asset.type === "video");
   const audioAssets = assets.filter((asset) => asset.type === "audio");
   const activeJobs = renderJobs.filter((job) => ["queued", "preparing", "running"].includes(job.status));
+  const nextTask = selectedScene ? nextTaskForScene(selectedScene, assets, renderJobs) : undefined;
+  const blockers = unresolvedBlockers(projectScenes, episodes.filter((episode) => episode.projectId === activeProject?.id));
+  const missing = selectedScene ? missingRequirements(selectedScene, assets, renderJobs) : [];
+  const completions = recentCompletions(projectScenes, assets, renderJobs);
+  const continueTo = continueDestination(productionContext, projectScenes, assets, renderJobs);
 
   if (loading) return <LoadingState label="Loading Mission Control..." />;
   if (!activeProject) {
@@ -40,7 +47,25 @@ export function DashboardPage() {
 
   return (
     <div className="grid gap-5">
+      <ProductionContextIndicator context={productionContext} projects={projects} seasons={seasons} episodes={episodes} scenes={scenes} characters={characters} locations={locations} />
       <ProjectHero project={activeProject} scenes={projectScenes} assets={assets} characters={characters} />
+
+      <GlassPanel>
+        <SectionHeader eyebrow="Today's Focus" title={nextTask?.label ?? "Continue the active production"} />
+        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr_0.9fr]">
+          <div>
+            <p className="text-sm leading-6 text-[color:var(--ptl-text-secondary)]">
+              {activeEpisode ? `Episode ${activeEpisode.number}: ${activeEpisode.title}` : "No episode selected"} · {selectedScene ? `Scene ${selectedScene.order}: ${selectedScene.title}` : "No scene selected"}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <PtlButton onClick={() => navigate(continueTo)}>Continue Production</PtlButton>
+              {selectedScene && <PtlButton variant="secondary" onClick={() => navigate(`/projects/${activeProject.id}/episodes/${selectedScene.episodeId ?? ""}/scenes/${selectedScene.id}`)}>Open Scene Workspace</PtlButton>}
+            </div>
+          </div>
+          <SignalPanel title="Blockers" items={blockers.map((blocker) => blocker.message)} empty="No unresolved blockers." />
+          <SignalPanel title="Missing Requirements" items={missing.slice(0, 4)} empty="No missing requirements for the active scene." />
+        </div>
+      </GlassPanel>
 
       <SceneTimeline
         project={activeProject}
@@ -49,7 +74,10 @@ export function DashboardPage() {
         jobs={renderJobs}
         characters={characters}
         selectedSceneId={selectedScene?.id}
-        onSelect={(scene) => setSelectedSceneId(scene.id)}
+        onSelect={(scene) => {
+          setSelectedSceneId(scene.id);
+          setActiveScene(scene.id);
+        }}
       />
 
       {selectedScene && (
@@ -121,10 +149,17 @@ export function DashboardPage() {
       <GlassPanel>
         <SectionHeader eyebrow="Production Health" title="Repository-driven metrics" />
         <div className="grid gap-3 md:grid-cols-4">
-          <MetricTile label="Project Progress" value={`${projectProgress(projectScenes)}%`} />
+          <MetricTile label="Project Progress" value={`${projectCompletion(activeProject, projectScenes)}%`} />
           <MetricTile label="Scenes Complete" value={`${projectScenes.filter((scene) => scene.status === "completed").length}/${projectScenes.length}`} />
           <MetricTile label="Linked Assets" value={assets.filter((asset) => asset.projectId === activeProject.id).length} />
           <MetricTile label="Render Jobs" value={renderJobs.filter((job) => job.projectId === activeProject.id).length} />
+        </div>
+      </GlassPanel>
+
+      <GlassPanel>
+        <SectionHeader eyebrow="Recent Completions" title="What changed recently" />
+        <div className="grid gap-2">
+          {completions.map((item) => <p key={item} className="rounded-xl bg-white/[0.04] p-3 text-sm text-[color:var(--ptl-text-secondary)]">{item}</p>)}
         </div>
       </GlassPanel>
     </div>
@@ -154,6 +189,17 @@ function Waveform() {
   return (
     <div className="flex h-12 items-end gap-1">
       {Array.from({ length: 20 }, (_, index) => <span key={index} className="flex-1 rounded-full bg-[color:var(--ptl-violet-soft)]/70" style={{ height: `${14 + ((index * 11) % 30)}px` }} />)}
+    </div>
+  );
+}
+
+function SignalPanel({ title, items, empty }: { title: string; items: string[]; empty: string }) {
+  return (
+    <div className="rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
+      <h3 className="font-display text-base font-semibold">{title}</h3>
+      <div className="mt-3 grid gap-2">
+        {items.length ? items.map((item) => <p key={item} className="text-sm text-[color:var(--ptl-text-secondary)]">{item}</p>) : <p className="text-sm text-[color:var(--ptl-text-muted)]">{empty}</p>}
+      </div>
     </div>
   );
 }

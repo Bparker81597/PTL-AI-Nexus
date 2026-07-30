@@ -9,6 +9,7 @@ import { AiEnginesPage } from "../features/engines/AiEnginesPage";
 import { NovaTonePage } from "../features/novatone/NovaTonePage";
 import { ProjectsPage } from "../features/projects/ProjectsPage";
 import { ProjectDetailPage } from "../features/projects/ProjectDetailPage";
+import { SceneWorkspacePage } from "../features/projects/SceneWorkspacePage";
 import { RenderQueuePage } from "../features/render-queue/RenderQueuePage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 
@@ -23,6 +24,7 @@ export function AppRoutes() {
       <Route path="/novatone" element={<NovaTonePage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+      <Route path="/projects/:projectId/episodes/:episodeId/scenes/:sceneId" element={<SceneWorkspacePage />} />
       <Route path="/render-queue" element={<RenderQueuePage />} />
       <Route path="/assets" element={<AssetLibraryPage />} />
       <Route path="/engines" element={<AiEnginesPage />} />

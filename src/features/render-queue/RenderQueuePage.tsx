@@ -8,16 +8,18 @@ const statuses: Array<RenderStatus | "all"> = ["all", "queued", "preparing", "ru
 
 export function RenderQueuePage() {
   const [params, setParams] = useSearchParams();
-  const { renderJobs, projects, scenes, assets, characters, cancelJob, retryJob } = useClusterStore();
-  const projectId = params.get("projectId") ?? "all";
+  const { renderJobs, projects, scenes, assets, characters, productionContext, cancelJob, retryJob } = useClusterStore();
+  const projectId = params.get("projectId") ?? productionContext.activeProjectId ?? "all";
   const generationType = params.get("generationType") ?? "all";
   const status = params.get("status") ?? "all";
+  const sceneId = params.get("sceneId") ?? (projectId === "all" ? "all" : productionContext.activeSceneId ?? "all");
 
   const filtered = renderJobs.filter((job) => {
     const projectMatches = projectId === "all" || job.projectId === projectId;
     const typeMatches = generationType === "all" || job.generationType === generationType;
     const statusMatches = status === "all" || job.status === status;
-    return projectMatches && typeMatches && statusMatches;
+    const sceneMatches = sceneId === "all" || job.sceneId === sceneId;
+    return projectMatches && typeMatches && statusMatches && sceneMatches;
   });
 
   const updateFilter = (key: string, value: string) => {
@@ -48,7 +50,25 @@ export function RenderQueuePage() {
               {statuses.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </Field>
+          <Field label="Filter by scene">
+            <select className={inputClass} value={sceneId} onChange={(event) => updateFilter("sceneId", event.target.value)}>
+              <option value="all">All scenes</option>
+              {scenes.filter((scene) => projectId === "all" || scene.projectId === projectId).map((scene) => <option key={scene.id} value={scene.id}>{scene.order}. {scene.title}</option>)}
+            </select>
+          </Field>
         </div>
+        <button
+          type="button"
+          className="focus-ring mt-3 text-sm font-semibold text-cyan-100"
+          onClick={() => {
+            const next = new URLSearchParams();
+            next.set("projectId", "all");
+            next.set("sceneId", "all");
+            setParams(next);
+          }}
+        >
+          View full queue
+        </button>
       </Card>
       <Card>
         <div className="grid gap-3">
@@ -78,7 +98,7 @@ export function RenderQueuePage() {
                   {source && <Link to="/assets"><Button variant="secondary">View Source</Button></Link>}
                   {output && <Link to="/assets"><Button variant="secondary">View Output</Button></Link>}
                   {job.projectId && <Link to={`/projects/${job.projectId}`}><Button variant="secondary">Open Project</Button></Link>}
-                  {scene && <Link to={`/projects/${scene.projectId}`}><Button variant="secondary">Open Scene</Button></Link>}
+                  {scene && <Link to={`/projects/${scene.projectId}/episodes/${scene.episodeId ?? ""}/scenes/${scene.id}`}><Button variant="secondary">Open Scene</Button></Link>}
                 </div>
               </div>
             );

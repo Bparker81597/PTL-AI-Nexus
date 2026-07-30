@@ -16,16 +16,17 @@ export function NovaCanvasPage() {
   const location = useLocation();
   const [params] = useSearchParams();
   const routeState = (location.state ?? {}) as CanvasRouteState;
-  const { characters, assets, projects, scenes, renderJobs, generate, refreshAll } = useClusterStore();
+  const { characters, assets, projects, scenes, renderJobs, productionContext, locations, generate, refreshAll, setWorkflowFocus } = useClusterStore();
   const [selectedProjectId, setSelectedProjectId] = useState(
-    routeState.projectId ?? params.get("projectId") ?? projects[0]?.id ?? "",
+    routeState.projectId ?? params.get("projectId") ?? productionContext.activeProjectId ?? projects[0]?.id ?? "",
   );
-  const [selectedSceneId, setSelectedSceneId] = useState(routeState.sceneId ?? params.get("sceneId") ?? "");
+  const [selectedSceneId, setSelectedSceneId] = useState(routeState.sceneId ?? params.get("sceneId") ?? productionContext.activeSceneId ?? "");
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<string[]>(
-    routeState.characterIds ?? params.get("characterIds")?.split(",").filter(Boolean) ?? characters.slice(0, 2).map((character) => character.id),
+    routeState.characterIds ?? params.get("characterIds")?.split(",").filter(Boolean) ?? productionContext.activeCharacterIds ?? characters.slice(0, 2).map((character) => character.id),
   );
   const selectedCharacters = characters.filter((character) => selectedCharacterIds.includes(character.id));
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
+  const selectedLocation = locations.find((location) => location.id === (selectedScene?.locationId ?? productionContext.activeLocationId));
   const selectedProjectScenes = scenes.filter((scene) => scene.projectId === selectedProjectId);
   const consistencyText = selectedCharacters
     .map((character) =>
@@ -56,6 +57,10 @@ export function NovaCanvasPage() {
   );
 
   useEffect(() => {
+    setWorkflowFocus("visual-development", "/canvas");
+  }, [setWorkflowFocus]);
+
+  useEffect(() => {
     if (!lastJobId) return;
     const timer = window.setInterval(() => void refreshAll(), 350);
     return () => window.clearInterval(timer);
@@ -83,6 +88,10 @@ export function NovaCanvasPage() {
         quality: "high",
         count: 4,
         sceneId: selectedSceneId || undefined,
+        episodeId: selectedScene?.episodeId ?? productionContext.activeEpisodeId,
+        seasonId: selectedScene?.seasonId ?? productionContext.activeSeasonId,
+        locationId: selectedLocation?.id,
+        assetPurpose: "storyboard-frame",
         consistencyPrompts: consistencyText,
       },
     });
@@ -123,6 +132,13 @@ export function NovaCanvasPage() {
             <Field label="Prompt">
               <textarea className={textareaClass} value={prompt} onChange={(event) => setPrompt(event.target.value)} required />
             </Field>
+            {selectedLocation && (
+              <div className="rounded-[16px] border border-[color:var(--ptl-border-subtle)] bg-white/[0.035] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Active location</p>
+                <h3 className="mt-2 font-display text-lg font-semibold">{selectedLocation.name}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{selectedLocation.visualNotes}</p>
+              </div>
+            )}
             <Field label="Relevant consistency prompts">
               <textarea className={textareaClass} value={consistencyText} readOnly aria-label="Relevant consistency prompts" />
             </Field>
@@ -153,7 +169,7 @@ export function NovaCanvasPage() {
               </select>
             </Field>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Style"><select className={inputClass}><option>3D adventure</option><option>Concept art</option><option>Storyboard</option></select></Field>
+              <Field label="Production action"><select className={inputClass}><option>Generate storyboard frame</option><option>Generate background</option><option>Generate prop</option><option>Generate character expression</option><option>Generate outfit reference</option><option>Generate final illustration</option></select></Field>
               <Field label="Aspect ratio"><select className={inputClass} value={aspectRatio} onChange={(event) => setAspectRatio(event.target.value)}><option>16:9</option><option>1:1</option><option>9:16</option></select></Field>
               <Field label="Seed"><input className={inputClass} type="number" defaultValue={2401} /></Field>
               <Field label="Quality"><select className={inputClass}><option>High</option><option>Draft</option></select></Field>

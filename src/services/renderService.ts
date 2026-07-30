@@ -36,6 +36,9 @@ export class RenderService {
       request,
       sourceAssetIds: request.sourceAssetIds,
       sceneId: this.getSceneId(request),
+      seasonId: this.getStringSetting(request, "seasonId"),
+      episodeId: this.getStringSetting(request, "episodeId"),
+      locationId: this.getStringSetting(request, "locationId"),
     };
 
     await this.jobs.create(job);
@@ -81,7 +84,13 @@ export class RenderService {
             simulated: true,
             generationType: job.generationType,
             sceneId,
+            seasonId: job.seasonId,
+            episodeId: job.episodeId,
+            locationId: job.locationId,
           },
+          seasonId: job.seasonId,
+          episodeId: job.episodeId,
+          locationId: job.locationId,
         }),
       ),
     );
@@ -160,6 +169,11 @@ export class RenderService {
   private getSceneId(request: GenerationRequest): string | undefined {
     const sceneId = request.settings.sceneId;
     return typeof sceneId === "string" ? sceneId : undefined;
+  }
+
+  private getStringSetting(request: GenerationRequest, key: string): string | undefined {
+    const value = request.settings[key];
+    return typeof value === "string" ? value : undefined;
   }
 
   private async stopIfCancelled(jobId: string): Promise<RenderJob> {

@@ -4,7 +4,7 @@ import { useClusterStore } from "../../app/useClusterStore";
 import { FeaturePanel, GlassPanel, MediaPreview, PageHeader, PtlButton, PtlField, PtlInput, PtlTextarea, SectionHeader } from "../../components/ptl";
 
 export function CharacterStudioPage() {
-  const { characters, projects, scenes, assets, createCharacter } = useClusterStore();
+  const { characters, projects, scenes, assets, productionContext, createCharacter } = useClusterStore();
   const [selectedCharacterId, setSelectedCharacterId] = useState(characters[0]?.id);
   const selected = characters.find((character) => character.id === selectedCharacterId) ?? characters[0];
   const [form, setForm] = useState({
@@ -27,6 +27,12 @@ export function CharacterStudioPage() {
       <PageHeader eyebrow="Character Bible" title="Character Studio">
         {selected && <Link to={`/characters/${selected.id}`}><PtlButton>Open {selected.name}</PtlButton></Link>}
       </PageHeader>
+      <GlassPanel>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--ptl-cyan-soft)]">Active production usage</p>
+        <p className="mt-2 text-sm text-[color:var(--ptl-text-secondary)]">
+          Active scene characters are highlighted. {productionContext.activeCharacterIds.length} character profiles are currently in production context.
+        </p>
+      </GlassPanel>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(280px,360px)_1fr]">
         <GlassPanel>
@@ -38,7 +44,9 @@ export function CharacterStudioPage() {
                 type="button"
                 onClick={() => setSelectedCharacterId(character.id)}
                 className={`focus-ring overflow-hidden rounded-[18px] border text-left transition hover:-translate-y-0.5 hover:bg-[color:var(--ptl-bg-hover)] ${
-                  selected?.id === character.id ? "border-[color:var(--ptl-border-violet)] bg-violet-400/10" : "border-[color:var(--ptl-border-subtle)] bg-white/[0.03]"
+                  productionContext.activeCharacterIds.includes(character.id)
+                    ? "border-[color:var(--ptl-border-active)] bg-[color:var(--ptl-bg-hover)] shadow-[var(--ptl-glow-cyan)]"
+                    : selected?.id === character.id ? "border-[color:var(--ptl-border-violet)] bg-violet-400/10" : "border-[color:var(--ptl-border-subtle)] bg-white/[0.03]"
                 }`}
               >
                 <MediaPreview src={character.portrait || character.heroImage || character.referenceImages[0]?.url} alt={`${character.name} portrait`} className="aspect-[5/3] rounded-b-none" />
@@ -55,7 +63,7 @@ export function CharacterStudioPage() {
                     <span>{projects.filter((project) => project.characterIds.includes(character.id)).length} projects</span>
                     <span>{scenes.filter((scene) => scene.characterIds.includes(character.id)).length} scenes</span>
                     <span>{assets.filter((asset) => asset.characterIds?.includes(character.id) || asset.characterId === character.id).length} assets</span>
-                    <span>{character.friends?.slice(0, 1).join(", ") || "No links"}</span>
+                    <span>{productionContext.activeCharacterIds.includes(character.id) ? "Active scene" : character.friends?.slice(0, 1).join(", ") || "No links"}</span>
                   </div>
                 </div>
               </button>

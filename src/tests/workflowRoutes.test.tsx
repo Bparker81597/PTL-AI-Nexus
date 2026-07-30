@@ -26,13 +26,13 @@ describe("connected workflow routes", () => {
   it("renders timeline scenes in order and supports selection", async () => {
     renderRoute("/");
 
-    const firstScene = (await screen.findAllByText("The Crew Meets at the Clubhouse"))[0];
-    const secondScene = (await screen.findAllByText("The Wonder Question"))[0];
+    const firstScene = (await screen.findAllByText("Morning at Treehouse HQ"))[0];
+    const secondScene = (await screen.findAllByText("The Mission Board"))[0];
     expect(firstScene.compareDocumentPosition(secondScene) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     await userEvent.click(secondScene);
     expect(screen.getByText("Selected Scene")).toBeInTheDocument();
-    expect(screen.getAllByText("The Wonder Question").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("The Mission Board").length).toBeGreaterThan(1);
   });
 
   it("routes from Mission Control module cards", async () => {
@@ -77,8 +77,9 @@ describe("connected workflow routes", () => {
   it("opens a project detail page", async () => {
     renderRoute("/projects/project-monster-truck");
 
-    expect(await screen.findByRole("heading", { name: "PTL Crew - Series Foundation" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "PTL Crew - Series Foundation" })).toBeInTheDocument();
     expect(screen.getByText("Storyboard")).toBeInTheDocument();
+    expect(screen.getByText("Production Hub")).toBeInTheDocument();
   });
 
   it("sends a scene to NovaCanvas with context", async () => {
