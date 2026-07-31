@@ -6,6 +6,8 @@ export interface ProviderStatusItem {
   capabilities: string[];
 }
 
+const liveGatewayConfigured = Boolean((import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim());
+
 export const providerStatusItems: ProviderStatusItem[] = [
   {
     id: "mock",
@@ -13,6 +15,13 @@ export const providerStatusItems: ProviderStatusItem[] = [
     category: "ai",
     status: "connected",
     capabilities: ["image", "image-to-video", "text-to-video", "voice", "music", "sound-effect"],
+  },
+  {
+    id: "live-video-gateway",
+    name: "Live Video Gateway",
+    category: "ai",
+    status: liveGatewayConfigured ? "connected" : "not configured",
+    capabilities: ["image-to-video", "text-to-video", "secure-backend"],
   },
   {
     id: "comfyui",

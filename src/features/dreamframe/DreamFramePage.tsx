@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useClusterStore } from "../../app/useClusterStore";
 import { Button, Card, Field, PageHeader, StatusBadge, inputClass, textareaClass } from "../../components/Ui";
+import { createId, nowIso } from "../../utils/ids";
+import type { GenerationMode } from "../../types/domain";
 
 interface DreamFrameRouteState {
   projectId?: string;
@@ -17,7 +19,9 @@ export function DreamFramePage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const routeState = (location.state ?? {}) as DreamFrameRouteState;
-  const { assets, characters, projects, renderJobs, scenes, productionContext, locations, generate, refreshAll, setWorkflowFocus } = useClusterStore();
+  const { assets, characters, projects, renderJobs, scenes, productionContext, locations, generate, createAsset, refreshAll, setWorkflowFocus } = useClusterStore();
+  const liveGatewayConfigured = Boolean((import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim());
+  const [generationMode, setGenerationMode] = useState<GenerationMode>("mock");
   const [selectedProjectId, setSelectedProjectId] = useState(routeState.projectId ?? params.get("projectId") ?? productionContext.activeProjectId ?? projects[0]?.id ?? "");
   const [selectedSceneId, setSelectedSceneId] = useState(routeState.sceneId ?? params.get("sceneId") ?? productionContext.activeSceneId ?? "");
   const [sourceAssetId, setSourceAssetId] = useState(routeState.sourceAssetId ?? params.get("sourceAssetId") ?? "");
@@ -81,38 +85,80 @@ export function DreamFramePage() {
     setSelectedCharacterIds(selectedScene.characterIds);
   }, [characters, selectedScene]);
 
+  const uploadSourceImage = async (file?: File) => {
+    if (!file || !selectedProjectId) return;
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Could not read source image."));
+      reader.readAsDataURL(file);
+    });
+    const asset = await createAsset({
+      id: createId("asset"),
+      name: file.name.replace(/\.[^.]+$/, "") || "Uploaded DreamFrame source",
+      type: "generated-image",
+      url: dataUrl,
+      projectId: selectedProjectId,
+      sceneId: selectedSceneId || undefined,
+      characterIds: selectedCharacterIds,
+      createdAt: nowIso(),
+      isMock: false,
+      category: "Source Image",
+      tags: ["dreamframe", "source-image"],
+      seasonId: selectedScene?.seasonId ?? productionContext.activeSeasonId,
+      episodeId: selectedScene?.episodeId ?? productionContext.activeEpisodeId,
+      locationId: selectedLocation?.id,
+      metadata: {
+        uploaded: true,
+        usage: "DreamFrame source image",
+      },
+    });
+    setSourceAssetId(asset.id);
+  };
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!selectedProjectId || !selectedSceneId || !sourceAssetId || !motionPrompt.trim()) {
       setValidation("Select a project, scene, source image, and motion prompt before generating a clip.");
       return;
     }
+    if (generationMode === "live" && !liveGatewayConfigured) {
+      setValidation("Live Mode requires VITE_API_BASE_URL to point to the secure generation gateway. No provider secrets belong in the frontend.");
+      return;
+    }
     setValidation("");
-    const job = await generate({
-      projectId: selectedProjectId,
-      generationType: "image-to-video",
-      prompt: `${motionPrompt}\nCharacter action: ${actionPrompt}`,
-      negativePrompt: negativeMotionPrompt,
-      characterIds: selectedCharacterIds,
-      sourceAssetIds: [sourceAssetId],
-      settings: {
-        sceneId: selectedSceneId,
-        cameraMovement,
-        duration,
-        episodeId: selectedScene?.episodeId ?? productionContext.activeEpisodeId,
-        seasonId: selectedScene?.seasonId ?? productionContext.activeSeasonId,
-        locationId: selectedLocation?.id,
-        productionNotes: selectedScene?.notes,
-        aspectRatio,
-        resolution,
-        fps,
-        motionStrength,
-        seed,
-        negativeMotionPrompt,
-      },
-    });
-    setLastJobId(job.id);
-    navigate(`/render-queue?projectId=${selectedProjectId}&generationType=image-to-video`);
+    try {
+      const job = await generate({
+        projectId: selectedProjectId,
+        generationType: "image-to-video",
+        prompt: `${motionPrompt}\nCharacter action: ${actionPrompt}`,
+        negativePrompt: negativeMotionPrompt,
+        characterIds: selectedCharacterIds,
+        sourceAssetIds: [sourceAssetId],
+        mode: generationMode,
+        preferredProvider: generationMode === "live" ? "live-video-gateway" : "mock",
+        settings: {
+          generationMode,
+          sceneId: selectedSceneId,
+          cameraMovement,
+          duration,
+          episodeId: selectedScene?.episodeId ?? productionContext.activeEpisodeId,
+          seasonId: selectedScene?.seasonId ?? productionContext.activeSeasonId,
+          locationId: selectedLocation?.id,
+          productionNotes: selectedScene?.notes,
+          aspectRatio,
+          resolution,
+          fps,
+          motionStrength,
+          seed,
+          negativeMotionPrompt,
+        },
+      });
+      setLastJobId(job.id);
+      navigate(`/render-queue?projectId=${selectedProjectId}&generationType=image-to-video`);
+    } catch (error) {
+      setValidation(error instanceof Error ? error.message : "Could not start generation.");
+    }
   };
 
   return (
@@ -122,6 +168,19 @@ export function DreamFramePage() {
         <Card>
           <form className="grid gap-4" onSubmit={submit}>
             {validation && <p className="rounded-xl bg-rose-300/15 p-3 text-sm font-bold text-rose-100">{validation}</p>}
+            <Field label="Generation mode">
+              <select className={inputClass} value={generationMode} onChange={(event) => setGenerationMode(event.target.value as GenerationMode)}>
+                <option value="mock">Mock Mode - simulated local render</option>
+                <option value="live">Live Mode - secure video gateway</option>
+              </select>
+            </Field>
+            {generationMode === "live" && (
+              <div className={`rounded-[16px] border p-4 text-sm ${liveGatewayConfigured ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-100" : "border-amber-300/30 bg-amber-300/10 text-amber-100"}`}>
+                {liveGatewayConfigured
+                  ? "Live Mode will submit this clip to the configured secure generation gateway. Provider credentials remain server-side."
+                  : "Live Mode is not configured. Set VITE_API_BASE_URL to your deployed generation gateway before submitting real jobs."}
+              </div>
+            )}
             <Field label="Project selector">
               <select className={inputClass} value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)} required>
                 {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
@@ -138,6 +197,9 @@ export function DreamFramePage() {
                 <option value="">Select source image</option>
                 {sourceImages.map((asset) => <option key={asset.id} value={asset.id}>{asset.name}</option>)}
               </select>
+            </Field>
+            <Field label="Upload source image">
+              <input className={inputClass} type="file" accept="image/*" onChange={(event) => void uploadSourceImage(event.target.files?.[0])} />
             </Field>
             <Field label="Character selector">
               <select
@@ -180,7 +242,7 @@ export function DreamFramePage() {
             </div>
             <Field label="Motion strength"><input className={inputClass} type="range" min={0} max={1} step={0.01} value={motionStrength} onChange={(event) => setMotionStrength(Number(event.target.value))} /></Field>
             <Field label="Negative motion prompt"><textarea className={textareaClass} value={negativeMotionPrompt} onChange={(event) => setNegativeMotionPrompt(event.target.value)} /></Field>
-            <Button type="submit">{selectedProjectId && selectedSceneId && sourceAssetId ? "Generate Simulated Clip" : "Complete Required Fields"}</Button>
+            <Button type="submit">{selectedProjectId && selectedSceneId && sourceAssetId ? (generationMode === "live" ? "Submit Live Clip" : "Generate Simulated Clip") : "Complete Required Fields"}</Button>
           </form>
         </Card>
         <div className="grid gap-4">

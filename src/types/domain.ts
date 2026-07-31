@@ -247,6 +247,8 @@ export type GenerationType =
   | "music"
   | "sound-effect";
 
+export type GenerationMode = "mock" | "live";
+
 export interface Asset {
   id: string;
   name: string;
@@ -473,6 +475,7 @@ export interface RenderJob {
   projectName?: string;
   generationType: GenerationType;
   providerId: string;
+  providerJobId?: string;
   status: RenderStatus;
   progress: number;
   createdAt: string;
@@ -489,6 +492,7 @@ export interface RenderJob {
   locationId?: string;
   productionStage?: keyof SceneStageProgress;
   reviewStatus?: ApprovalState;
+  metadata?: Record<string, unknown>;
 }
 
 export interface GenerationRequest {
@@ -501,6 +505,7 @@ export interface GenerationRequest {
   sourceAssetIds?: string[];
   settings: Record<string, unknown>;
   preferredProvider?: string;
+  mode?: GenerationMode;
 }
 
 export interface GenerationResult {

@@ -1,4 +1,5 @@
 import { mockProvider } from "./mockProvider";
+import { liveVideoGatewayProvider } from "./liveVideoGatewayProvider";
 import {
   comfyUiProvider,
   huggingFaceProvider,
@@ -41,6 +42,7 @@ export class EngineRouter {
 
 export const engineRouter = new EngineRouter([
   mockProvider,
+  liveVideoGatewayProvider,
   comfyUiProvider,
   runPodProvider,
   huggingFaceProvider,

@@ -8,7 +8,7 @@ One platform. Infinite creativity. Everything connects.
 
 It coordinates characters, projects, scenes, images, clips, audio, render jobs, assets, and AI engine configuration through one shared local-first system.
 
-The current app is mock-provider-first. It proves the complete creative workflow before connecting live GPU providers, Supabase, Cloudflare R2, or other production services.
+The current app is mock-provider-first, with an optional secure Live Mode for DreamFrame video generation when a backend generation gateway is configured. It proves the complete creative workflow before connecting Supabase, Cloudflare R2, or other production services.
 
 ## Flagship Content
 
@@ -37,7 +37,7 @@ The dashboard is now the **Mission Control** operating surface. It centers the a
 
 - **Character Studio**: character profiles, references, expressions, outfits, prompts, and LoRA placeholders.
 - **NovaCanvas**: project and scene-linked mock image generation.
-- **DreamFrame**: source-image-to-mock-clip scene animation workflow.
+- **DreamFrame**: source-image-to-video scene animation workflow with separate Mock Mode and Live Mode.
 - **NovaTone**: voice, music, and sound-effect production workspace.
 - **Projects**: project cards and project-detail command center.
 - **Render Queue**: progress, cancel, retry, source/output, project and scene actions.
@@ -86,13 +86,31 @@ Design tokens and global atmosphere live in `src/styles.css` and `tailwind.confi
 
 See [docs/PTL_DESIGN_SYSTEM.md](docs/PTL_DESIGN_SYSTEM.md).
 
-## Mock Generation Flow
+## Generation Modes
 
-When a creator generates media, the app creates a render job, queues it, progresses it through preparing/running/completed states, calls the Mock Provider, saves the generated asset, links it to the selected project and scene, updates local state, and persists through refresh.
+Mock Mode remains the default. When a creator generates media in Mock Mode, the app creates a render job, queues it, progresses it through preparing/running/completed states, calls the Mock Provider, saves the generated asset, links it to the selected project and scene, updates local state, and persists through refresh.
+
+DreamFrame also supports Live Mode through a secure generation gateway. Live Mode submits image-to-video jobs to `VITE_API_BASE_URL` and expects a backend endpoint to submit and poll the real provider job. The browser never receives provider API keys.
+
+Expected gateway endpoints:
+
+```text
+POST   /api/generation/video
+GET    /api/generation/video/:providerJobId
+DELETE /api/generation/video/:providerJobId
+```
+
+A Cloudflare Worker reference implementation is included at:
+
+```text
+server/cloudflare-worker/generation-gateway.mjs
+```
+
+That Worker uses backend-only variables such as `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT_ID`. It is not part of the GitHub Pages frontend bundle.
 
 ## Provider Limitations
 
-Only the Mock Provider is connected. ComfyUI, RunPod, Hugging Face, Local AI Server, Cloudflare R2, and Supabase remain not configured placeholders. No external generation, storage, or database APIs are called in this phase.
+Only the Mock Provider is connected by default. The Live Video Gateway displays connected only when `VITE_API_BASE_URL` is configured. ComfyUI, RunPod, Hugging Face, Local AI Server, Cloudflare R2, and Supabase remain not configured placeholders unless a secure backend is connected.
 
 ## Security Rules
 

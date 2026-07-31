@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { EngineRouter } from "../providers/ai/engineRouter";
 import { mockProvider } from "../providers/ai/mockProvider";
+import type { AIProvider } from "../providers/ai/types";
 import {
   LocalAssetRepository,
   LocalProjectRepository,
@@ -118,5 +119,64 @@ describe("RenderService", () => {
     const retried = await jobs.getById("job-first-attempt-failed");
     expect(retried?.status).toBe("completed");
     expect(retried?.errorMessage).toBeUndefined();
+  });
+
+  it("submits live video jobs through a live provider and saves a real clip asset", async () => {
+    vi.useFakeTimers();
+    const jobs = new LocalRenderJobRepository();
+    const assets = new LocalAssetRepository();
+    const projects = new LocalProjectRepository();
+    const scenes = new LocalSceneRepository();
+    const liveProvider: AIProvider = {
+      id: "live-video-gateway",
+      name: "Live Video Gateway",
+      type: "video",
+      mode: "live",
+      status: "connected",
+      capabilities: ["image-to-video"],
+      async generate() {
+        throw new Error("RenderService should use submit/poll for live providers.");
+      },
+      async submitGeneration() {
+        return { providerJobId: "provider-live-1", status: "queued", progress: 2 };
+      },
+      async getGenerationStatus() {
+        return {
+          providerJobId: "provider-live-1",
+          status: "completed",
+          progress: 100,
+          assets: [
+            {
+              id: "asset-live-video",
+              name: "Live video",
+              type: "video",
+              url: "https://cdn.example.com/live-video.mp4",
+              createdAt: new Date().toISOString(),
+              isMock: false,
+            },
+          ],
+        };
+      },
+    };
+    const service = new RenderService(jobs, assets, projects, scenes, new EngineRouter([mockProvider, liveProvider]));
+
+    const job = await service.startGeneration({
+      id: "request-live-video",
+      projectId: "project-monster-truck",
+      generationType: "image-to-video",
+      prompt: "Animate the PTL Crew scene",
+      sourceAssetIds: ["asset-crew-clubhouse-concept"],
+      settings: { sceneId: "scene-clubhouse-meet", duration: 5 },
+      preferredProvider: "live-video-gateway",
+      mode: "live",
+    });
+    await vi.runAllTimersAsync();
+
+    const completed = await jobs.getById(job.id);
+    const saved = completed?.outputAssetIds[0] ? await assets.getById(completed.outputAssetIds[0]) : undefined;
+    expect(completed?.providerJobId).toBe("provider-live-1");
+    expect(completed?.status).toBe("completed");
+    expect(saved?.isMock).toBe(false);
+    expect(saved?.url).toContain(".mp4");
   });
 });

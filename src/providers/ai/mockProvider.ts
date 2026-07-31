@@ -24,6 +24,7 @@ export const mockProvider: AIProvider = {
   id: "mock",
   name: "Mock Provider",
   type: "multimodal",
+  mode: "mock",
   status: "connected",
   capabilities: ["image", "image-to-video", "text-to-video", "voice", "music", "sound-effect"],
   async generate(request: GenerationRequest): Promise<GenerationResult> {

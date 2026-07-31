@@ -71,6 +71,7 @@ interface ClusterState {
   duplicateScene: (sceneId: string) => Promise<Scene>;
   reorderScene: (sceneId: string, direction: "up" | "down") => Promise<void>;
   generate: (request: Omit<GenerationRequest, "id">) => Promise<RenderJob>;
+  createAsset: (asset: Asset) => Promise<Asset>;
   cancelJob: (jobId: string) => Promise<void>;
   retryJob: (jobId: string) => Promise<void>;
   updateAsset: (asset: Asset) => Promise<Asset>;
@@ -253,7 +254,8 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         locationId: input.settings.locationId ?? context.activeLocationId,
       },
       id: createId("request"),
-      preferredProvider: input.preferredProvider ?? get().settings?.preferredProvider ?? "mock",
+      preferredProvider: input.preferredProvider ?? (input.mode === "live" ? "live-video-gateway" : get().settings?.preferredProvider ?? "mock"),
+      mode: input.mode ?? "mock",
     });
     set({
       renderJobs: [job, ...get().renderJobs],
@@ -277,6 +279,14 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     const updated = await repositories.assets.update(asset);
     set({ assets: get().assets.map((item) => (item.id === updated.id ? updated : item)) });
     return updated;
+  },
+  async createAsset(asset) {
+    const created = await repositories.assets.create(asset);
+    set({
+      assets: [created, ...get().assets],
+      notices: [pushNotice("Asset saved.", "success"), ...get().notices],
+    });
+    return created;
   },
   async deleteAsset(assetId) {
     await repositories.assets.delete(assetId);
