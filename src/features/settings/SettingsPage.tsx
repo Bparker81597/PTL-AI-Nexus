@@ -2,6 +2,7 @@ import { Card, PageHeader } from "../../components/Ui";
 import { NexusLogo, OrbitDivider } from "../../components/ptl";
 
 const brittanyReference = `${import.meta.env.BASE_URL}assets/parker-tech-labs/brittany/branding/brittanyverse-character-bible.png`;
+const brittanySpotlight = `${import.meta.env.BASE_URL}assets/parker-tech-labs/brittany/spotlight/brittany-founder-spotlight.png`;
 
 export function SettingsPage() {
   return (
@@ -25,9 +26,9 @@ export function SettingsPage() {
           </div>
         </Card>
         <Card>
-          <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <div className="overflow-hidden rounded-[20px] border border-[color:var(--ptl-border-active)] bg-[#07111f]">
-              <img src={brittanyReference} alt="Brittany Parker founder character bible reference" className="aspect-[4/5] h-full w-full object-cover object-left" loading="lazy" />
+          <div className="grid gap-5 lg:grid-cols-[minmax(280px,0.92fr)_minmax(0,1fr)] lg:items-stretch">
+            <div className="flex min-h-[320px] overflow-hidden rounded-[22px] border border-[color:var(--ptl-border-active)] bg-[#07111f] p-[clamp(10px,1vw,16px)] shadow-[0_22px_70px_rgba(0,0,0,0.26)]">
+              <img src={brittanySpotlight} alt="Brittany Parker founder spotlight artwork" className="block h-full w-full object-contain object-center" loading="lazy" />
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--ptl-cyan-soft)]">Founder Profile</p>
@@ -46,6 +47,7 @@ export function SettingsPage() {
                 ))}
               </div>
               <p className="mt-4 text-sm font-medium text-white">Build. Learn. Create.</p>
+              <p className="sr-only">Detailed founder reference board remains available at {brittanyReference}.</p>
             </div>
           </div>
         </Card>

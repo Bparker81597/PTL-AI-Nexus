@@ -8,6 +8,7 @@ const crewBoardUrl = publicAsset("assets/ptl-crew/brand/ptl-crew-character-board
 const crewCastPanelsUrl = publicAsset("assets/ptl-crew/brand/ptl-crew-cast-panels.png");
 const crewSeriesKeyArtUrl = publicAsset("assets/ptl-crew/projects/ptl-crew-series-key-art.png");
 const brittanyBoardUrl = publicAsset("assets/parker-tech-labs/brittany/branding/brittanyverse-character-bible.png");
+const brittanySpotlightUrl = publicAsset("assets/parker-tech-labs/brittany/spotlight/brittany-founder-spotlight.png");
 const brooklynPortrait = publicAsset("assets/ptl-crew/characters/brooklyn/brooklyn-character-panel.png");
 const maddiePortrait = publicAsset("assets/ptl-crew/characters/maddie/maddie-character-panel.png");
 const laylaPortrait = publicAsset("assets/ptl-crew/characters/layla/layla-character-panel.png");
@@ -35,12 +36,38 @@ export const sampleAssets: Asset[] = [
     tags: ["parker-tech-labs", "brittany", "founder", "studio-avatar", "ptl-ai-nexus", "brand", "presenter"],
     universeId,
     metadata: {
+      assetRole: "founder-reference-board",
+      usage: ["Detailed Founder Profile", "Brand Assets", "Reference Materials"],
+      status: "Approved",
       displayName: "Brittany Parker",
       role: "Founder, Creator, Builder, and Dreamer",
       company: "Parker Tech Labs",
       platform: "PTL AI Nexus",
       motto: "Build. Learn. Create.",
       approvedReference: true,
+    },
+  },
+  {
+    id: "asset-brittany-founder-spotlight",
+    name: "Brittany Parker Founder Spotlight",
+    type: "character-reference",
+    url: brittanySpotlightUrl,
+    createdAt,
+    dimensions: "394x403",
+    isMock: true,
+    category: "Founder Profile",
+    tags: ["parker-tech-labs", "brittany", "founder", "studio-avatar", "ptl-ai-nexus", "brand", "spotlight"],
+    universeId,
+    metadata: {
+      assetRole: "founder-spotlight",
+      usage: "Mission Control Founder Profile card",
+      status: "Approved",
+      displayName: "Brittany Parker",
+      role: "Founder, Creator, Builder, and Dreamer",
+      company: "Parker Tech Labs",
+      platform: "PTL AI Nexus",
+      motto: "Build. Learn. Create.",
+      source: "provided-crop",
     },
   },
   {
